@@ -1,0 +1,16 @@
+# NOTE: This Docker image is for development purposes only.
+
+version: "3.8"
+
+services:
+  bot:
+    build: .
+    image: telegram-twitter-bot
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+  redis:
+    image: redis:alpine
+    command: [ "redis-server", "--bind", "redis", "--port", "6379" ]
+# docker-compose -f ./docker-compose.yml up -d --build
