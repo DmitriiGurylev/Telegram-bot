@@ -24,7 +24,11 @@ data = resp_bank(bank_api)  # variable equals data acquired from bank api
 def exchange_valute(value, from_first, to_second):  # function which converts valute
     first_value = data["Valute"][from_first]["Value"] / data["Valute"][from_first]["Nominal"]
     second_value = data["Valute"][to_second]["Value"] / data["Valute"][to_second]["Nominal"]
-    return value * int(first_value) / int(second_value)
+    try:
+        return float(value) * float(first_value) / float(second_value)
+
+    except:
+        return
 
 # неиспользуемые данные для инлайновых сообщений; нужны, чтобы не забыть
 # keyboard
@@ -70,12 +74,9 @@ def start_welcome(message):
 @bot.message_handler(commands=['exchange'])  # handle with "exchange" command
 def exchange(message):  # just a description of the command
     bot.send_message(message.chat.id, "U can choose currency exchange "
-                                      "of these currencies:\n"
-                                      "AUD, AZN, GBP, AMD, BYN, BGN, BRL, HUF,"
-                                      "HKD, DKK, USD, EUR, INR, KZT, CAD, KGS,"
-                                      "CNY, MDL, NOK, PLN, RON, XDR, SGD, TJS,"
-                                      "TRY, TMT, UZS, UAH, CZK, SEK, CHF, ZAR, "
-                                      "KRW, JPY\n"
+                                      "of these currencies:\n"+
+                                      str(data["Valute"].keys())+
+                                      "\n"
                                       "So, write down an expression in a next way: \n"
                                       "11 USD EUR")
 
@@ -94,18 +95,22 @@ def about_reply(message):
 @bot.message_handler(content_types=['text'])  # handle with text (ONLY FOR "EXCHANGE" COMMAND)
 def qwerty(message):
     user_text = message.text.split()
-    if len(user_text) == 3 and user_text[0].isdigit():
+    if len(user_text) == 3 and user_text[0].isdigit() and len(user_text[1]) == 3 and len(user_text[2]) == 3:
         user_text[1] = user_text[1].upper()  # transform letters to uppercase
         user_text[2] = user_text[2].upper()
         if user_text[1] in data["Valute"].keys() and user_text[2] in data["Valute"].keys():
-            ex_v = exchange_valute(int(user_text[0]), user_text[1], user_text[2])
+            ex_v = exchange_valute(user_text[0], user_text[1], user_text[2])
         elif user_text[1] == "RUR" and user_text[2] in data["Valute"].keys():
-            ex_v = int(user_text[0]) / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]]["Nominal"]
+            ex_v = user_text[0] / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]]["Nominal"]
         elif user_text[2] == "RUR" and user_text[1] in data["Valute"].keys():
-            ex_v = int(user_text[0]) * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]]["Nominal"]
+            ex_v = user_text[0] * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]]["Nominal"]
         else:
             bot.send_message(message.chat.id, "Try to write data in a correct way.")
             return
+    else:
+        bot.send_message(message.chat.id, "I can't work with this text. It's not correct to handle.")
+        return
+
 
     bot.send_message(message.chat.id,  # bot send a result of the operations
                      "{} {} --> {} = {}"
