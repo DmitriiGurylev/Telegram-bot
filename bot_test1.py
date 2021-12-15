@@ -1,24 +1,49 @@
 import telebot
+import tweepy
 from telebot import types
 import random
 import requests
 import json
 import config
 
+auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
+auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
+
+api = tweepy.API(auth, wait_on_rate_limit=True)
+
 photo_number = 0
 random_digit = 0
 
-bot = telebot.TeleBot(config.token)
+bot = telebot.TeleBot(config.bot_token)
 bank_api = config.url_currency
+twitter_message_id = config.twitter_url_tweet_id
 
 
-def resp_bank(api):  # function which read data  and deserialize them from bank API
+def resp_bank(api):  # function which read data  and deserialize them from API
     response = requests.get(api)
     deserial = json.loads(response.text)
     return deserial
 
 
-data = resp_bank(bank_api)  # variable equals data acquired from bank api
+def resp_twitter(twitter_message_id):  # function which read data  and deserialize them from API
+    url = 'https://api.twitter.com/2/tweets'
+
+    my_headers = {}
+    my_headers['Authorization'] = 'Bearer '+config.twitter_bearer_token
+
+    my_params = {}
+    my_params['ids'] = twitter_message_id
+    my_params['tweet.fields'] = 'created_at'
+    my_params['expansions'] = 'author_id'
+    my_params['user.fields'] = 'created_at'
+
+    response = requests.get(
+        url,
+        params=my_params,
+        headers=my_headers
+    )
+    json_response = response.json()
+    return json_response
 
 
 def exchange_valute(value, from_first, to_second):  # function which converts valute
@@ -26,9 +51,15 @@ def exchange_valute(value, from_first, to_second):  # function which converts va
     second_value = data["Valute"][to_second]["Value"] / data["Valute"][to_second]["Nominal"]
     try:
         return float(value) * float(first_value) / float(second_value)
-
     except:
         return
+
+
+data = resp_bank(bank_api)  # variable equals data acquired from bank api
+tweet = resp_twitter(twitter_message_id)
+
+message_twitter = tweet
+
 
 # неиспользуемые данные для инлайновых сообщений; нужны, чтобы не забыть
 # keyboard
@@ -66,7 +97,7 @@ def start_welcome(message):
 
     bot.send_message(message.chat.id,  # second message following the first one
                      "So u can send me a digit between 1 and 3 "
-                     "to get some solar power \n"
+                     "to get some power \n"
                      "(05 region).",
                      reply_markup=keyboardIn1)
 
@@ -74,11 +105,11 @@ def start_welcome(message):
 @bot.message_handler(commands=['exchange'])  # handle with "exchange" command
 def exchange(message):  # just a description of the command
     bot.send_message(message.chat.id, "U can choose currency exchange "
-                                      "of these currencies:\n"+
-                                      str(data["Valute"].keys())+
-                                      "\n"
-                                      "So, write down an expression in a next way: \n"
-                                      "11 USD EUR")
+                                      "of these currencies:\n" +
+                     str(data["Valute"].keys()) +
+                     "\n"
+                     "So, write down an expression in a next way: \n"
+                     "11 USD EUR")
 
 
 @bot.message_handler(commands=['about'])  # handle with "about" command
@@ -86,7 +117,7 @@ def about_reply(message):
     image2 = open('static/about.jpg', 'rb')  # another pic
     bot.send_photo(message.chat.id, image2)
     bot.send_message(message.chat.id,
-                     "I was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
+                     "It was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
                      "[VK](vk.com/id46566190)\n"  # VK link (for Russian and C.I.S. people who use it always and everywhere)
                      "[Instagram](instagram.com/dmitrygurylev/)",  # Instagram link
                      parse_mode="Markdown")
@@ -101,9 +132,9 @@ def qwerty(message):
         if user_text[1] in data["Valute"].keys() and user_text[2] in data["Valute"].keys():
             ex_v = exchange_valute(user_text[0], user_text[1], user_text[2])
         elif user_text[1] == "RUR" and user_text[2] in data["Valute"].keys():
-            ex_v = user_text[0] / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]]["Nominal"]
-        elif user_text[2] == "RUR" and user_text[1] in data["Valute"].keys():
-            ex_v = user_text[0] * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]]["Nominal"]
+            ex_v = float(user_text[0]) / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]]["Nominal"]
+        elif user_text[1] in data["Valute"].keys() and user_text[2] == "RUR":
+            ex_v = float(user_text[0]) * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]]["Nominal"]
         else:
             bot.send_message(message.chat.id, "Try to write data in a correct way.")
             return
@@ -111,22 +142,23 @@ def qwerty(message):
         bot.send_message(message.chat.id, "I can't work with this text. It's not correct to handle.")
         return
 
-
     bot.send_message(message.chat.id,  # bot send a result of the operations
                      "{} {} --> {} = {}"
                      .format(user_text[0], user_text[1], user_text[2], ex_v))
 
 
 @bot.callback_query_handler(func=lambda call: True)  # dunno what is lambda function
-def callback_inline(call):  #  handle with inline digits 1, 2 and 3
+def callback_inline(call):  # handle with inline digits 1, 2 and 3
     global photo_number  # variable which count attempts
     try:
         if call.message:
-            if str(call.data) == random_digit:  # if inline digit equals the random value we defined in "start_welcome" function
+            if str(
+                    call.data) == random_digit:  # if inline digit equals the random value we defined in "start_welcome" function
                 image2 = open('static/dag.jpg', 'rb')
                 bot.send_photo(call.message.chat.id, image2)  # send a picture of a brave Dagestan's sitizen
                 bot.send_message(call.message.chat.id, "Salam aleykum")
-                bot.edit_message_reply_markup(chat_id=call.message.chat.id,  # inline keyboard must be removed if you guessed the digit
+                bot.edit_message_reply_markup(chat_id=call.message.chat.id,
+                                              # inline keyboard must be removed if you guessed the digit
                                               message_id=call.message.message_id,
                                               reply_markup="")
                 photo_number = 0
