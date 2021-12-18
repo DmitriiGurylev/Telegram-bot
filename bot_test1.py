@@ -15,7 +15,8 @@ photo_number = 0
 random_digit = 0
 
 bot = telebot.TeleBot(config.bot_token)
-twitter_user_id = "donaldtrump"
+twitter_user_id = set()
+twitter_user_id.add("donaldtrump")
 
 
 def response_bank(api):  # function which read data  and deserialize them from API
@@ -61,10 +62,8 @@ def response_twitter_tweets(messages_id):  # function which read data  and deser
 def exchange_valute(value, from_first, to_second):  # function which converts valute
     first_value = data["Valute"][from_first]["Value"] / data["Valute"][from_first]["Nominal"]
     second_value = data["Valute"][to_second]["Value"] / data["Valute"][to_second]["Nominal"]
-    try:
+    if second_value != 0:
         return float(value) * float(first_value) / float(second_value)
-    except:
-        return
 
 
 data = response_bank(config.bank_api_currency)  # variable representing data acquired from bank api
@@ -103,13 +102,13 @@ def start_welcome(message):
                      "1) /exchange, "
                      "to check the currency today "
                      "according to central bank of RUSSIA FEDERUSSIA \n"
-                     "2) /about, to know some information"
+                     "2) /about, to know some information \n"
+                     "3) /tweetInfo, to get tex of tweet"
                      .format(message.from_user.first_name, bot.get_me().first_name))
 
     bot.send_message(message.chat.id,  # second message following the first one
-                     "So u can send me a digit between 1 and 3 "
-                     "to get some power \n"
-                     "(05 region).",
+                     "U can send me a digit between 1 and 3 "
+                     "to get a random 05 picture",
                      reply_markup=keyboard_in1)
 
 
@@ -119,7 +118,7 @@ def exchange(message):  # just a description of the command
                                       "of these currencies:\n" +
                      str(data["Valute"].keys()) +
                      "\n"
-                     "So, write down an expression in a next way: \n"
+                     "To get result write down an expression according to a next way: \n"
                      "11 USD EUR")
 
 
@@ -129,36 +128,77 @@ def about_reply(message):
     bot.send_photo(message.chat.id, image2)
     bot.send_message(message.chat.id,
                      "It was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
-                     "[VK](vk.com/id46566190)\n"  # VK link (for Russian and C.I.S. people who use it always and everywhere)
+                     "[VK](vk.com/id46566190)\n"  # VK link
                      "[Instagram](instagram.com/dmitrygurylev/)",  # Instagram link
                      parse_mode="Markdown")
 
 
+    @bot.message_handler(commands=['tweetInfo'])  # handle with text (ONLY FOR TWEETINFO COMMAND)
+    def qwerty(message):
+        bot.send_message(message.chat.id, "Write needed tweets down in a next way:\n "
+                                          "tweet=<tweetId> or"
+                                          "tweets=<tweetId1>,<tweetId2>... without spaces")
+
+
 @bot.message_handler(content_types=['text'])  # handle with text (ONLY FOR "EXCHANGE" COMMAND)
 def qwerty(message):
-    user_text = message.text.split()
-    if len(user_text) == 3 and user_text[0].isdigit() and len(user_text[1]) == 3 and len(user_text[2]) == 3:
-        user_text[1] = user_text[1].upper()  # transform letters to uppercase
-        user_text[2] = user_text[2].upper()
-        if user_text[1] in data["Valute"].keys() and user_text[2] in data["Valute"].keys():
-            ex_v = exchange_valute(user_text[0], user_text[1], user_text[2])
-        elif user_text[1] == "RUR" and user_text[2] in data["Valute"].keys():
-            ex_v = float(user_text[0]) / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]]["Nominal"]
-        elif user_text[1] in data["Valute"].keys() and user_text[2] == "RUR":
-            ex_v = float(user_text[0]) * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]]["Nominal"]
+    if (message.text.find("tweet=") or message.text.find("tweets=")):
+        if "tweet=" in message.text:
+            messages_number = 1
         else:
-            bot.send_message(message.chat.id, "Try to write data in a correct way.")
-            return
+            messages_number = len(message.text.replace("tweets=", "").split(","))
+        response = response_twitter_tweets(message.text.replace(" ", "").split("=")[1])
+
+        if messages_number == 1:
+            if "data" in response:
+                bot.send_message(
+                    message.chat.id,
+                    "text:\n" + response["data"][0]["text"] + "\n" +
+                    "author_id: " + response["data"][0]["author_id"] + "\n\n" +
+                    "created_at: " + response["data"][0]["created_at"])
+            elif "errors" in response:
+                bot.send_message(
+                    message.chat.id,
+                    "Error:\n{}".format(response["errors"][0]["detail"]))
+        else:
+            if "data" in response:
+                for dataItem in response["data"]:
+                    bot.send_message(
+                        message.chat.id,
+                        "text:\n" + dataItem["text"] + "\n\n" +
+                        "author_id: " + dataItem["author_id"] + "\n" +
+                        "created_at: " + dataItem["created_at"])
+            elif "errors" in response:
+                bot.send_message(
+                    message.chat.id,
+                    "Error:\n{}".format(response["errors"][0]["message"]))
+
     else:
-        bot.send_message(message.chat.id, "I can't work with this text. It's not correct to handle.")
-        return
+        user_text = message.text.split()
+        if len(user_text) == 3 and user_text[0].isdigit() and len(user_text[1]) == 3 and len(user_text[2]) == 3:
+            user_text[1] = user_text[1].upper()  # transform letters to uppercase
+            user_text[2] = user_text[2].upper()
+            if user_text[1] in data["Valute"].keys() and user_text[2] in data["Valute"].keys():
+                ex_v = exchange_valute(user_text[0], user_text[1], user_text[2])
+            elif user_text[1] == "RUR" and user_text[2] in data["Valute"].keys():
+                ex_v = float(user_text[0]) / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]]["Nominal"]
+            elif user_text[1] in data["Valute"].keys() and user_text[2] == "RUR":
+                ex_v = float(user_text[0]) * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]]["Nominal"]
+            else:
+                bot.send_message(
+                    message.chat.id,
+                    "Try to write data in a correct way.")
+                return
+        else:
+            bot.send_message(message.chat.id, "I can't work with this text. It's not correct to handle.")
+            return
 
-    bot.send_message(message.chat.id,  # bot send a result of the operations
-                     "{} {} --> {} = {}"
-                     .format(user_text[0], user_text[1], user_text[2], ex_v))
+        bot.send_message(
+            message.chat.id,  # bot send a result of the operations
+            "{} {} --> {} = {}".format(user_text[0], user_text[1], user_text[2], ex_v))
 
 
-@bot.callback_query_handler(func=lambda call: True)  # dunno what is lambda function
+@bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):  # handle with inline digits 1, 2 and 3
     global photo_number  # variable which count attempts
     try:
@@ -178,9 +218,9 @@ def callback_inline(call):  # handle with inline digits 1, 2 and 3
                 if photo_number == 1:
                     bot.send_message(call.message.chat.id, "Did not guess the needed digit")
                 elif photo_number == 2:
-                    bot.send_message(call.message.chat.id, "well, the last attempt must be correct")
+                    bot.send_message(call.message.chat.id, "Well, the last attempt must be correct")
                 else:
-                    bot.send_message(call.message.chat.id, "you pushed this button already...")
+                    bot.send_message(call.message.chat.id, "You pushed this button already...")
     except Exception:
         print(repr(Exception))
 
