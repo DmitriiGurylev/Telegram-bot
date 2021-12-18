@@ -5,40 +5,52 @@ import random
 import requests
 import json
 import config
+import twitterApi
 
-auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
-auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
-
-api = tweepy.API(auth, wait_on_rate_limit=True)
+twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
+twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
+twitter_api = tweepy.API(twitter_auth, wait_on_rate_limit=True)
 
 photo_number = 0
 random_digit = 0
 
 bot = telebot.TeleBot(config.bot_token)
-bank_api = config.url_currency
-twitter_message_id = config.twitter_url_tweet_id
+twitter_user_id = "donaldtrump"
 
 
-def resp_bank(api):  # function which read data  and deserialize them from API
+def response_bank(api):  # function which read data  and deserialize them from API
     response = requests.get(api)
     deserial = json.loads(response.text)
     return deserial
 
 
-def resp_twitter(twitter_message_id):  # function which read data  and deserialize them from API
-    url = 'https://api.twitter.com/2/tweets'
+def response_stasuses_user_timeline(user_id):  # function which read data  and deserialize them from API
 
     my_headers = {}
-    my_headers['Authorization'] = 'Bearer '+config.twitter_bearer_token
+    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
 
-    my_params = {}
-    my_params['ids'] = twitter_message_id
-    my_params['tweet.fields'] = 'created_at'
-    my_params['expansions'] = 'author_id'
-    my_params['user.fields'] = 'created_at'
+    my_params = twitterApi.twitter_stasuses_user_timeline
+    my_params['user_id'] = user_id
 
     response = requests.get(
-        url,
+        twitterApi.twitter_stasuses_user_timelineUrl,
+        params=my_params,
+        headers=my_headers
+    )
+    json_response = response.json()
+    return json_response
+
+
+def response_twitter_tweets(messages_id):  # function which read data  and deserialize them from API
+
+    my_headers = {}
+    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+
+    my_params = twitterApi.twitter_tweets
+    my_params['ids'] = messages_id
+
+    response = requests.get(
+        twitterApi.twitter_tweetsUrl,
         params=my_params,
         headers=my_headers
     )
@@ -55,10 +67,9 @@ def exchange_valute(value, from_first, to_second):  # function which converts va
         return
 
 
-data = resp_bank(bank_api)  # variable equals data acquired from bank api
-tweet = resp_twitter(twitter_message_id)
-
-message_twitter = tweet
+data = response_bank(config.bank_api_currency)  # variable representing data acquired from bank api
+tweets = response_twitter_tweets(twitter_user_id)
+twitter_user = response_stasuses_user_timeline(twitter_user_id)
 
 
 # неиспользуемые данные для инлайновых сообщений; нужны, чтобы не забыть
@@ -75,15 +86,15 @@ message_twitter = tweet
 
 @bot.message_handler(commands=['start'])  # handle the command "Start"
 def start_welcome(message):
-    global random_digit  # variable to initialise a random value
+    global random_digit
     random_digit = str(random.randint(1, 3))  # random value from 1 to 3. Why we use it? Look below
-    image1 = open('static/start.jpg', 'rb')  # start image. Yes, it's anime picture...
+    image1 = open('static/start.jpg', 'rb')  # start image
     bot.send_photo(message.chat.id, image1)  # send the photo to a user
-    keyboardIn1 = types.InlineKeyboardMarkup(row_width=3)  # create an inline keyboard with 3 values
+    keyboard_in1 = types.InlineKeyboardMarkup(row_width=3)  # create an inline keyboard with 3 values
     unit_1 = types.InlineKeyboardButton("1", callback_data="1")
     unit_2 = types.InlineKeyboardButton("2", callback_data="2")
     unit_3 = types.InlineKeyboardButton("3", callback_data="3")
-    keyboardIn1.add(unit_1, unit_2, unit_3)
+    keyboard_in1.add(unit_1, unit_2, unit_3)
 
     bot.send_message(message.chat.id,  # start message by bot
                      "Hi, {}!\n"
@@ -99,7 +110,7 @@ def start_welcome(message):
                      "So u can send me a digit between 1 and 3 "
                      "to get some power \n"
                      "(05 region).",
-                     reply_markup=keyboardIn1)
+                     reply_markup=keyboard_in1)
 
 
 @bot.message_handler(commands=['exchange'])  # handle with "exchange" command
