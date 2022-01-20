@@ -13,3 +13,6 @@ twitter_bearer_token = 'AAAAAAAAAAAAAAAAAAAAAI%2F3WAEAAAAAf%2FKXeYv1gCmPxs09gYiM
 
 # bank
 bank_api_currency = 'https://www.cbr-xml-daily.ru/daily_json.js'
+
+# chat id
+chat_id ='416544613'
