@@ -15,8 +15,7 @@ photo_number = 0
 random_digit = 0
 
 bot = telebot.TeleBot(config.bot_token)
-twitter_user_id = set()
-twitter_user_id.add("donaldtrump")
+twitter_tweets_id = set()
 
 
 def response_bank(api):  # function which read data  and deserialize them from API
@@ -30,11 +29,11 @@ def response_stasuses_user_timeline(user_id):  # function which read data  and d
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
 
-    my_params = twitterApi.twitter_stasuses_user_timeline
+    my_params = twitterApi.twitter_users_tweets
     my_params['user_id'] = user_id
 
     response = requests.get(
-        twitterApi.twitter_stasuses_user_timelineUrl,
+        twitterApi.twitter_users_tweetsUrl,
         params=my_params,
         headers=my_headers
     )
@@ -42,7 +41,7 @@ def response_stasuses_user_timeline(user_id):  # function which read data  and d
     return json_response
 
 
-def response_twitter_tweets(messages_id):  # function which read data  and deserialize them from API
+def response_twitter_tweets(messages_id):  # read data of tweet and deserialize them from API
 
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
@@ -59,6 +58,24 @@ def response_twitter_tweets(messages_id):  # function which read data  and deser
     return json_response
 
 
+def response_twitter_last5tweetsofTheUser(user_id):  # function which read data of tweet and deserialize them from API
+
+    my_headers = {}
+    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+
+    my_params = twitterApi.twitter_users_tweets
+    # my_params['id'] = user_id
+    my_params['max_results'] = 5
+
+    response = requests.get(
+        twitterApi.twitter_users_tweetsUrl.replace(":id", user_id),
+        params=my_params,
+        headers=my_headers
+    )
+    json_response = response.json()
+    return json_response
+
+
 def exchange_valute(value, from_first, to_second):  # function which converts valute
     first_value = data["Valute"][from_first]["Value"] / data["Valute"][from_first]["Nominal"]
     second_value = data["Valute"][to_second]["Value"] / data["Valute"][to_second]["Nominal"]
@@ -67,8 +84,8 @@ def exchange_valute(value, from_first, to_second):  # function which converts va
 
 
 data = response_bank(config.bank_api_currency)  # variable representing data acquired from bank api
-tweets = response_twitter_tweets(twitter_user_id)
-twitter_user = response_stasuses_user_timeline(twitter_user_id)
+tweets = response_twitter_tweets(twitter_tweets_id)
+twitter_user = response_stasuses_user_timeline(twitter_tweets_id)
 
 
 # неиспользуемые данные для инлайновых сообщений; нужны, чтобы не забыть
@@ -142,7 +159,7 @@ def about_reply(message):
 
 @bot.message_handler(content_types=['text'])  # handle with text (ONLY FOR "EXCHANGE" COMMAND)
 def qwerty(message):
-    if (message.text.find("tweet=") or message.text.find("tweets=")):
+    if "tweet=" in message.text or "tweets=" in message.text:
         if "tweet=" in message.text:
             messages_number = 1
         else:
@@ -172,6 +189,19 @@ def qwerty(message):
                 bot.send_message(
                     message.chat.id,
                     "Error:\n{}".format(response["errors"][0]["message"]))
+
+    elif "twitterAuthorId=" in  message.text:
+        response = response_twitter_last5tweetsofTheUser(message.text.replace(" ", "").split("=")[1])
+        if "data" in response:
+            for dataItem in response["data"]:
+                bot.send_message(
+                    message.chat.id,
+                    "messageId:\n" + dataItem["id"] + "\n\n" +
+                    "text:\n" + dataItem["text"] + "\n\n")
+        elif "errors" in response:
+            bot.send_message(
+                message.chat.id,
+                "Error:\n{}".format(response["errors"][0]["message"]))
 
     else:
         user_text = message.text.split()
