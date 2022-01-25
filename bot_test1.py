@@ -1,32 +1,34 @@
-import datetime
 import json
 import random
 import time
 from threading import Thread
-
 import telebot
 import tweepy
 from telebot import types
+
 import config
 import responses
 from bank_check import exchange_valute
+from datetime import datetime, timedelta
 
 twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
 twitter_api = tweepy.API(twitter_auth, wait_on_rate_limit=True)
 
+dtformat = '%Y-%m-%dT%H:%M:%SZ'
+flag_for_zero = 0
 photo_number = 0
 random_digit = 0
 telegram_test_bot = telebot.TeleBot(config.bot_token)
 twitter_tweets_id = set()
-temp_twitter_init_data = {"authorIds": list({"1464562711019274240"})}
+temp_twitter_init_data = {"author_ids": list({"1464562711019274240"})}
 is_bot_started = False
 
 with open("temp_twitter.json", "w") as outfile:
     outfile.write(json.dumps(temp_twitter_init_data, indent=4))
 
 # variable representing data acquired from bank api
-twitter_user = responses.response_stasuses_user_timeline(twitter_tweets_id)
+twitter_user = responses.response_statuses_user_timeline(twitter_tweets_id)
 
 
 # неиспользуемые данные для инлайновых сообщений; нужны, чтобы не забыть
@@ -71,7 +73,6 @@ def handle():
                                        "to get a random 05 picture",
                                        reply_markup=keyboard_in1)
 
-
     @telegram_test_bot.message_handler(commands=['exchange'])  # handle with "exchange" command
     def exchange(message):  # just a description of the command
         data = responses.response_bank(config.bank_api_currency)
@@ -81,7 +82,6 @@ def handle():
                                        "\n"
                                        "To get result write down an expression according to a next way: \n"
                                        "11 USD EUR")
-
 
     @telegram_test_bot.message_handler(commands=['about'])  # handle with "about" command
     def about_reply(message):
@@ -93,33 +93,30 @@ def handle():
                                        "[Instagram](instagram.com/dmitrygurylev/)",  # Instagram link
                                        parse_mode="Markdown")
 
-
     @telegram_test_bot.message_handler(commands=['tweetInfo'])  # handle with text (ONLY FOR TWEETINFO COMMAND)
     def qwerty(message):
         telegram_test_bot.send_message(message.chat.id, "Write needed tweets down in a next way:\n "
                                                         "tweet=<tweetId> or"
                                                         "tweets=<tweetId1>,<tweetId2>... without spaces")
 
-
     @telegram_test_bot.message_handler(commands=['tweeterUserInfo'])  # handle with text (ONLY FOR TWEETINFO COMMAND)
     def qwerty(message):
         telegram_test_bot.send_message(message.chat.id, "Write needed twitterAuthorId down in a next way:\n "
                                                         "twitterAuthorId=<twitterAuthorId> without spaces")
-
 
     @telegram_test_bot.callback_query_handler(func=lambda call: True)
     def callback_inline(call):  # handle with inline digits 1, 2 and 3
         global photo_number  # variable which count attempts
         try:
             if call.message:
-                if str(
-                        call.data_bank_api) == random_digit:  # if inline digit equals the random value we defined in "start_welcome" function
+                # if inline digit equals the random value we defined in "start_welcome" function
+                if str(call.data_bank_api) == random_digit:
                     image2 = open('static/dag.jpg', 'rb')
                     telegram_test_bot.send_photo(call.message.chat.id,
                                                  image2)  # send a picture of a brave Dagestan's sitizen
                     telegram_test_bot.send_message(call.message.chat.id, "Salam aleykum")
+                    # inline keyboard must be removed if you guessed the digit
                     telegram_test_bot.edit_message_reply_markup(chat_id=call.message.chat.id,
-                                                                # inline keyboard must be removed if you guessed the digit
                                                                 message_id=call.message.message_id,
                                                                 reply_markup="")
                     photo_number = 0
@@ -134,9 +131,8 @@ def handle():
         except Exception:
             print(repr(Exception))
 
-
     @telegram_test_bot.message_handler(content_types=['text'])  # handle with text
-    def handleText(message):
+    def handle_text(message):
         global data
         if "tweet=" in message.text or "tweets=" in message.text:
             if "tweet=" in message.text:
@@ -209,18 +205,28 @@ def handle():
 
 
 def check_new_tweets_with_interval():
+    global flag_for_zero, until, since
     while True:
-        nowTimeInUtc = datetime.datetime.now(datetime.timezone.utc)
-        w = nowTimeInUtc.isoformat("T")[:-12] + "000Z"
-        time.sleep(5)
         if is_bot_started:
-            authorIds = set()
+            time.sleep(1)
+            while flag_for_zero == 0:
+                now_time_in_utc = datetime.utcnow()
+                since = now_time_in_utc - timedelta(seconds=16)
+                until = now_time_in_utc - timedelta(seconds=15)
+                flag_for_zero = flag_for_zero + 1
+
+            since_required_format = since.strftime(dtformat)
+            until_required_format = until.strftime(dtformat)
+
+            author_ids = set()
             with open("temp_twitter.json", "r") as openfile:
-                jsonData = json.load(openfile)
-                for i in jsonData['authorIds']:
-                    authorIds.add(i)
-                    for authorId in authorIds:
-                        response = responses.response_twitter_userSubscribeTweets(authorId, w)
+                json_data = json.load(openfile)
+                for i in json_data['author_ids']:
+                    author_ids.add(i)
+                    for authorId in author_ids:
+                        response = responses.response_twitter_user_subscribe_tweets(authorId,
+                                                                                    since_required_format,
+                                                                                    until_required_format)
                         if "data" in response:
                             for dataItem in response["data"]:
                                 telegram_test_bot.send_message(
@@ -232,16 +238,17 @@ def check_new_tweets_with_interval():
                             telegram_test_bot.send_message(
                                 chat_id,
                                 "Error:\n{}".format(response["errors"][0]["message"]))
+            since = until
+            until = until + timedelta(seconds=1)
+
                         # else:
                         #     telegram_test_bot.send_message(
                         #         chat_id,
                         #         "error occured!")
 
 
-
-thread1 = Thread(target=handle, args=())
-thread2 = Thread(target=check_new_tweets_with_interval, args=())
-
+thread1 = Thread(target=handle)
+thread2 = Thread(target=check_new_tweets_with_interval)
 
 thread1.start()
 thread2.start()

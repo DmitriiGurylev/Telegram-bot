@@ -31,14 +31,32 @@ def response_twitter_last5tweets_of_the_user(user_id):  # read data of tweet and
     return json_response
 
 
-def response_twitter_userSubscribeTweets(user_id, start_time):  # read data of tweet and deserialize them from API
+# read data of tweet and deserialize them from API
+def response_twitter_user_subscribe_tweets(user_id, start_time, end_time):
 
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
 
     my_params = twitterApi.twitter_users_tweets.copy()
-    my_params['tweet.fields'] = "created_at"
+    my_params['tweet.fields'] = "attachments," \
+                                "created_at," \
+                                "author_id," \
+                                "context_annotations," \
+                                "conversation_id," \
+                                "entities," \
+                                "geo," \
+                                "id," \
+                                "in_reply_to_user_id," \
+                                "lang," \
+                                "public_metrics," \
+                                "possibly_sensitive," \
+                                "referenced_tweets," \
+                                "reply_settings," \
+                                "source," \
+                                "text," \
+                                "withheld"
     my_params['start_time'] = start_time
+    my_params['end_time'] = end_time
 
     response = requests.get(
         twitterApi.twitter_users_tweetsUrl.replace(":id", user_id),
@@ -66,7 +84,7 @@ def response_twitter_tweets(messages_id):  # read data of tweet and deserialize 
     return json_response
 
 
-def response_stasuses_user_timeline(user_id):  # read data and deserialize them from API
+def response_statuses_user_timeline(user_id):  # read data and deserialize them from API
 
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
