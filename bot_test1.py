@@ -5,7 +5,7 @@ from threading import Thread
 import telebot
 import tweepy
 from telebot import types
-
+import shoes_size
 import config
 import responses
 from bank_check import exchange_valute
@@ -21,11 +21,12 @@ photo_number = 0
 random_digit = 0
 telegram_test_bot = telebot.TeleBot(config.bot_token)
 twitter_tweets_id = set()
-temp_twitter_init_data = {"author_ids": list({"1464562711019274240"})}
+temp_twitter_users_id = {}
 is_bot_started = False
 
-with open("temp_twitter.json", "w") as outfile:
-    outfile.write(json.dumps(temp_twitter_init_data, indent=4))
+with open("temp_twitter.json", "r") as input_file:
+    json_data = json.load(input_file)
+    last_tweet_of_the_user = json_data["author_ids"]
 
 # variable representing data acquired from bank api
 twitter_user = responses.response_statuses_user_timeline(twitter_tweets_id)
@@ -63,10 +64,11 @@ def handle():
                                        "U can send me next comands \n"
                                        "1) /exchange, "
                                        "to check the currency today "
-                                       "according to central bank of RUSSIA FEDERUSSIA \n"
+                                       "according to central bank of RUSSIAN FEDERATION \n"
                                        "2) /about, to know some information \n"
                                        "3) /tweetInfo, to get text of tweet \n"
                                        "4) /tweeterUserInfo, to get information about user \n"
+                                       "5) /shoesSize, to determine shoes size \n"
                                        .format(message.from_user.first_name, telegram_test_bot.get_me().first_name))
         telegram_test_bot.send_message(message.chat.id,  # second message following the first one
                                        "U can send me a digit between 1 and 3 "
@@ -82,6 +84,14 @@ def handle():
                                        "\n"
                                        "To get result write down an expression according to a next way: \n"
                                        "11 USD EUR")
+
+    @telegram_test_bot.message_handler(commands=['shoesSize'])  # handle with "exchange" command
+    def exchange(message):  # just a description of the command
+        data = responses.response_bank(config.bank_api_currency)
+        telegram_test_bot.send_message(message.chat.id, "U can determine your shoes size in RU, EU, UK, US. \n" +
+                                       "To get result write down an expression according to a next way: \n"
+                                       "40 men RU to UK  (instead men it could be women/child)\n"
+                                       "It means you have size in RU and need to return it in UK")
 
     @telegram_test_bot.message_handler(commands=['about'])  # handle with "about" command
     def about_reply(message):
@@ -198,6 +208,37 @@ def handle():
             telegram_test_bot.send_message(
                 message.chat.id,  # bot send a result of the operations
                 "{} {} --> {} = {}".format(user_text[0], user_text[1], user_text[2], ex_v))
+        elif len(message.text.split()) == 5 and \
+                (message.text.split()[1].equals('men') or message.text.split()[1].equals('women') or message.text.split()[1].equals('child')) and \
+                message.text.split()[0].isdigit() and \
+                len(message.text.split()[2]) == 2 and \
+                len(message.text.split()[4]) == 2 and \
+                message.text.split()[3] == 'to':
+            user_text = message.text.split()
+            user_text[1] = user_text[1].upper()  # transform letters to uppercase
+            user_text[3] = user_text[3].upper()
+
+            our_size = user_text[0]
+            if user_text[1] == 'men':
+                if user_text[2] == "RU":
+                    index = shoes_size.men_sizes_map.__getattribute__("RU").index(user_text[0])
+
+            if user_text[1] in data["Valute"].keys() and user_text[2] in data["Valute"].keys():
+                ex_v = exchange_valute(data, user_text[0], user_text[1], user_text[2])
+            elif user_text[1] == "RUR" and user_text[2] in data["Valute"].keys():
+                ex_v = float(user_text[0]) / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]][
+                    "Nominal"]
+            elif user_text[1] in data["Valute"].keys() and user_text[2] == "RUR":
+                ex_v = float(user_text[0]) * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]][
+                    "Nominal"]
+            else:
+                telegram_test_bot.send_message(
+                    message.chat.id,
+                    "Try to write data in a correct way.")
+                return
+            telegram_test_bot.send_message(
+                message.chat.id,  # bot send a result of the operations
+                "{} {} --> {} = {}".format(user_text[0], user_text[1], user_text[2], ex_v))
         else:
             telegram_test_bot.send_message(message.chat.id, "I can't work with this text. It's not correct to handle.")
 
@@ -219,25 +260,24 @@ def check_new_tweets_with_interval():
             until_required_format = until.strftime(dtformat)
 
             author_ids = set()
-            with open("temp_twitter.json", "r") as openfile:
-                json_data = json.load(openfile)
-                for i in json_data['author_ids']:
-                    author_ids.add(i)
-                    for authorId in author_ids:
-                        response = responses.response_twitter_user_subscribe_tweets(authorId,
-                                                                                    since_required_format,
-                                                                                    until_required_format)
-                        if "data" in response:
-                            for dataItem in response["data"]:
-                                telegram_test_bot.send_message(
-                                    chat_id,
-                                    "messageId:\n" + dataItem["id"] + "\n\n" +
-                                    "createdAt:\n" + dataItem["created_at"] + "\n\n" +
-                                    "text:\n" + dataItem["text"] + "\n\n")
-                        elif "errors" in response:
+
+            for i in last_tweet_of_the_user.keys():
+                author_ids.add(i)
+                for authorId in author_ids:
+                    response = responses.response_twitter_user_subscribe_tweets(authorId,
+                                                                                since_required_format,
+                                                                                until_required_format)
+                    if "data" in response:
+                        for dataItem in response["data"]:
                             telegram_test_bot.send_message(
                                 chat_id,
-                                "Error:\n{}".format(response["errors"][0]["message"]))
+                                "messageId:\n" + dataItem["id"] + "\n\n" +
+                                "createdAt:\n" + dataItem["created_at"] + "\n\n" +
+                                "text:\n" + dataItem["text"] + "\n\n")
+                    elif "errors" in response:
+                        telegram_test_bot.send_message(
+                            chat_id,
+                            "Error:\n{}".format(response["errors"][0]["message"]))
             since = until
             until = until + timedelta(seconds=1)
 

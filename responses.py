@@ -76,7 +76,7 @@ def response_twitter_tweets(messages_id):  # read data of tweet and deserialize 
     my_params['ids'] = messages_id
 
     response = requests.get(
-        twitterApi.twitter_tweetsUrl,
+        twitterApi.twitter_tweets_url,
         params=my_params,
         headers=my_headers
     )
@@ -89,11 +89,11 @@ def response_statuses_user_timeline(user_id):  # read data and deserialize them 
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
 
-    my_params = twitterApi.twitter_users_tweets.copy()
+    my_params = twitterApi.twitter_user_timeline.copy()
     my_params['user_id'] = user_id
 
     response = requests.get(
-        twitterApi.twitter_users_tweetsUrl,
+        twitterApi.twitter_user_timeline_url,
         params=my_params,
         headers=my_headers
     )

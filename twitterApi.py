@@ -1,25 +1,39 @@
 # twitter
 
 twitter_users_tweetsUrl = 'https://api.twitter.com/2/users/:id/tweets'
-twitter_users_tweets = {}
-twitter_users_tweets['id'] = None
-twitter_users_tweets['exclude'] = None
-twitter_users_tweets['expansions'] = None
-twitter_users_tweets['max_results'] = None
-twitter_users_tweets['media.fields'] = None
-twitter_users_tweets['pagination_token'] = None
-twitter_users_tweets['place.fields'] = None
-twitter_users_tweets['poll.fields'] = None
-twitter_users_tweets['since_id'] = None
-twitter_users_tweets['start_time'] = None
-twitter_users_tweets['end_time'] = None
-twitter_users_tweets['tweet.fields'] = None
-twitter_users_tweets['until_id'] = None
-twitter_users_tweets['user.fields'] = None
+twitter_users_tweets = {
+    'id': None,
+    'exclude': None,
+    'expansions': None,
+    'max_results': None,
+    'media.fields': None,
+    'pagination_token': None,
+    'place.fields': None,
+    'poll.fields': None,
+    'since_id': None,
+    'start_time': None,
+    'end_time': None,
+    'tweet.fields': None,
+    'until_id': None,
+    'user.fields': None
+}
 
-twitter_tweetsUrl = 'https://api.twitter.com/2/tweets'
-twitter_tweets = {}
-twitter_tweets['ids'] = None
-twitter_tweets['tweet.fields'] = 'created_at'
-twitter_tweets['expansions'] = 'author_id'
-twitter_tweets['user.fields'] = 'created_at'
+twitter_tweets_url = 'https://api.twitter.com/2/tweets'
+twitter_tweets = {
+    'ids': None,
+    'tweet.fields': 'created_at',
+    'expansions': 'author_id',
+    'user.fields': 'created_at'
+}
+
+twitter_user_timeline_url = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
+twitter_user_timeline = {
+    'user_id': None,
+    'screen_name': None,
+    'since_id': None,
+    'count': None,
+    'max_id': None,
+    'trim_user': None,
+    'exclude_replies': None,
+    'include_rts': None,
+}
