@@ -209,39 +209,33 @@ def handle():
                 message.chat.id,  # bot send a result of the operations
                 "{} {} --> {} = {}".format(user_text[0], user_text[1], user_text[2], ex_v))
         elif len(message.text.split()) == 5 and \
-                (message.text.split()[1].equals('men') or message.text.split()[1].equals('women') or message.text.split()[1].equals('child')) and \
+                (message.text.split()[1].lower() == 'men' or
+                 message.text.split()[1].lower() == 'women' or
+                 message.text.split()[1].lower() == 'child') and \
                 message.text.split()[0].isdigit() and \
                 len(message.text.split()[2]) == 2 and \
                 len(message.text.split()[4]) == 2 and \
-                message.text.split()[3] == 'to':
+                message.text.split()[3].lower() == 'to':
             user_text = message.text.split()
             user_text[1] = user_text[1].upper()  # transform letters to uppercase
             user_text[3] = user_text[3].upper()
 
-            our_size = user_text[0]
-            if user_text[1] == 'men':
-                if user_text[2] == "RU":
-                    index = shoes_size.men_sizes_map.__getattribute__("RU").index(user_text[0])
-
-            if user_text[1] in data["Valute"].keys() and user_text[2] in data["Valute"].keys():
-                ex_v = exchange_valute(data, user_text[0], user_text[1], user_text[2])
-            elif user_text[1] == "RUR" and user_text[2] in data["Valute"].keys():
-                ex_v = float(user_text[0]) / data["Valute"][user_text[2]]["Value"] * data["Valute"][user_text[2]][
-                    "Nominal"]
-            elif user_text[1] in data["Valute"].keys() and user_text[2] == "RUR":
-                ex_v = float(user_text[0]) * data["Valute"][user_text[1]]["Value"] / data["Valute"][user_text[1]][
-                    "Nominal"]
-            else:
+            our_size = float(user_text[0])
+            dict_of_our_size = shoes_size.sizes_dict.get(user_text[1])
+            list_with_sizes = dict_of_our_size.get(user_text[2])
+            if not list_with_sizes.__contains__(our_size):
                 telegram_test_bot.send_message(
-                    message.chat.id,
-                    "Try to write data in a correct way.")
-                return
-            telegram_test_bot.send_message(
-                message.chat.id,  # bot send a result of the operations
-                "{} {} --> {} = {}".format(user_text[0], user_text[1], user_text[2], ex_v))
-        else:
-            telegram_test_bot.send_message(message.chat.id, "I can't work with this text. It's not correct to handle.")
-
+                    message.chat.id,  # bot send a result of the operations
+                    "Selected size {} is not contined in \"{}\" sizes. \n"
+                    "Try one of this {}".format(user_text[0], user_text[2].upper(), list_with_sizes))
+            else:
+                index = list_with_sizes.index(our_size)
+                list_with_new_sizes = shoes_size.sizes_dict.get(user_text[1].upper()).get(user_text[4])
+                calculated_size = list_with_new_sizes.__getitem__(index)
+                telegram_test_bot.send_message(
+                    message.chat.id,  # bot send a result of the operations
+                    "Selected size {} of \"{}\" sizes equals to {} size of \"{}\" sizes"
+                        .format(user_text[0], user_text[2].upper(), calculated_size, user_text[4]))
     telegram_test_bot.polling(none_stop=True, interval=0)
 
 
@@ -281,10 +275,10 @@ def check_new_tweets_with_interval():
             since = until
             until = until + timedelta(seconds=1)
 
-                        # else:
-                        #     telegram_test_bot.send_message(
-                        #         chat_id,
-                        #         "error occured!")
+            # else:
+            #     telegram_test_bot.send_message(
+            #         chat_id,
+            #         "error occured!")
 
 
 thread1 = Thread(target=handle)
