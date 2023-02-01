@@ -19,18 +19,20 @@ photo_number = 0
 telegram_test_bot = telebot.TeleBot(config.bot_token)
 is_bot_started = False
 
+storage_twitter_subscription = "storage_twitter_subscription.txt"
+
 
 def add_to_storage_subscription(id):
     id_set = set()
 
-    with open("storage_twitter_subscription.txt", "r") as f:
+    with open(storage_twitter_subscription, "r") as f:
         ids = f.readlines()
         for id in ids:
             id = id.replace("\n", '')
             id_set.add(id)
 
     if id not in id_set:
-        with open("storage_twitter_subscription.txt", "a") as f:
+        with open(storage_twitter_subscription, "a") as f:
             f.write(id + "\n")
 
 def handle():
@@ -65,27 +67,47 @@ def handle():
     def handle_text(message):
         message_text_array = message.text.split(' ')
 
-        if "subscribe" == message_text_array[0]:
-            users_to_subscribe = message_text_array[1 : ]
-            response = twitter_responses.response_users(users_to_subscribe)
+        if message_text_array[0] == "subscribe":
+            subscribe(message)
+        elif message_text_array[0] == "list":
+            get_list(message)
 
-            users_to_subscribe = ""
-            errors = ""
-            for user_ok in response["data"]:
-                add_to_storage_subscription(user_ok["id"])
-                users_to_subscribe = users_to_subscribe + \
-                                     "Succesfully subscribed on user\n" + \
-                                     "id: " + user_ok["id"] +",\n"+ \
-                                     "name: "+user_ok["name"]+"\n\n"
-            for user_error in response["errors"]:
-                errors = errors + \
-                                     "Can't subscribe on user\n" + \
-                                     "name: " + user_error["value"] +"\n" \
-                                     "reason: " + user_error["detail"] + "\n\n"
-            telegram_test_bot.send_message(
-                message.chat.id,
-                users_to_subscribe+errors
-            )
+    def subscribe(message):
+        message_text_array = message.text.split(' ')
+
+        users_to_subscribe = message_text_array[1:]
+        response = twitter_responses.response_users(users_to_subscribe)
+
+        users_to_subscribe = ""
+        errors = ""
+        for user_ok in response["data"]:
+            add_to_storage_subscription(user_ok["id"])
+            users_to_subscribe = users_to_subscribe + \
+                                 "Succesfully subscribed on user\n" + \
+                                 "id: " + user_ok["id"] + ",\n" + \
+                                 "name: " + user_ok["name"] + "\n\n"
+        for user_error in response["errors"]:
+            errors = errors + \
+                     "Can't subscribe on user\n" + \
+                     "name: " + user_error["value"] + "\n" \
+                                                      "reason: " + user_error["detail"] + "\n\n"
+        telegram_test_bot.send_message(
+            message.chat.id,
+            users_to_subscribe + errors
+        )
+
+    def get_list(message):
+        id_list = []
+
+        with open(storage_twitter_subscription, "r") as f:
+            ids = f.readlines()
+            for id in ids:
+                id = id.replace("\n", '')
+                id_list.append(id)
+        telegram_test_bot.send_message(
+            message.chat.id,
+            id_list)
+
 
     @telegram_test_bot.message_handler(content_types=['text'])  # handle with text
     def handle_text(message):
