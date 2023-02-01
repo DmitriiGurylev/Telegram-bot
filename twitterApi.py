@@ -1,6 +1,11 @@
 # twitter
 
-twitter_users_tweetsUrl = 'https://api.twitter.com/2/users/:id/tweets'
+twitter_users_tweets_url = 'https://api.twitter.com/2/users/:id/tweets'
+
+
+twitter_users_url = 'https://api.twitter.com/2/users/by?usernames='
+
+
 twitter_users_tweets = {
     'id': None,
     'exclude': None,
