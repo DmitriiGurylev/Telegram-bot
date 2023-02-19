@@ -4,19 +4,28 @@ import config
 import twitterApi
 
 
-def response_users(users):
+def response_users_by_username(user_names):
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
-
-    my_params = ','.join(users)
-
+    my_params = ','.join(user_names)
     response = requests.get(
-        twitterApi.twitter_users_url + my_params,
+        twitterApi.twitter_users_by_username_url + my_params,
         headers=my_headers
     )
     json_response = response.json()
     return json_response
 
+
+def response_users_by_id(user_ids):
+    my_headers = {}
+    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_params = ','.join(user_ids)
+    response = requests.get(
+        twitterApi.twitter_users_by_id_url + my_params,
+        headers=my_headers
+    )
+    json_response = response.json()
+    return json_response
 
 def response_twitter_last5tweets_of_the_user(user_id):  # read data of tweet and deserialize them from API
 

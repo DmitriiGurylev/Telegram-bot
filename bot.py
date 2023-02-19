@@ -34,6 +34,10 @@ def add_to_storage_subscription(id_to_add):
     if id_to_add not in id_set:
         with open(storage_twitter_subscription, "a") as f:
             f.write(id_to_add + "\n")
+        return True
+    else:
+        return False
+
 
 def handle():
     @telegram_test_bot.message_handler(commands=['start'])  # handle the command "Start"
@@ -81,13 +85,17 @@ def handle():
     def msg_users_if_no_errors(resp_data):
         users_to_subscribe = ""
         for user_ok in resp_data:
-            add_to_storage_subscription(user_ok["id"])
-            users_to_subscribe = users_to_subscribe + \
-                                 "Succesfully subscribed on user\n" + \
-                                 "id: " + user_ok["id"] + ",\n" + \
-                                 "name: " + user_ok["name"] + "\n\n"
-        return users_to_subscribe
-
+            if add_to_storage_subscription(user_ok["username"]):
+                users_to_subscribe = users_to_subscribe + \
+                                     "Succesfully subscribed on user\n" + \
+                                     "id: " + user_ok["id"] + ",\n" + \
+                                     "name: " + user_ok["name"] + "\n\n"
+            else:
+                users_to_subscribe = users_to_subscribe + \
+                                     "Already subscribed on user\n" + \
+                                     "id: " + user_ok["id"] + ",\n" + \
+                                     "name: " + user_ok["name"] + "\n\n"
+            return users_to_subscribe
 
     def msg_users_if_errors(rest_error):
         errors = ""
@@ -98,11 +106,10 @@ def handle():
                                                       "reason: " + user_error["detail"] + "\n\n"
         return errors
 
-
-    def msg_subscribe(users_to_subscribe, message):
-        response = twitter_responses.response_users(users_to_subscribe)
-        msg_error=""
-        msg_ok=""
+    def msg_subscribe(user_names_to_subscribe, message):
+        response = twitter_responses.response_users_by_username(user_names_to_subscribe)
+        msg_error = ""
+        msg_ok = ""
         if 'data' in response:
             msg_ok = msg_users_if_no_errors(response["data"])
         if 'errors' in response:
@@ -111,7 +118,6 @@ def handle():
             message.chat.id,
             msg_ok + msg_error
         )
-
 
     def subscribe(message):
         message_text_array = message.text.split(' ')
@@ -130,10 +136,19 @@ def handle():
             for id in ids:
                 id = id.replace("\n", '')
                 id_list.append(id)
+
+        response = twitter_responses.response_users_by_id(id_list)
+        msg_ok = msg_users_if_no_errors(response["data"])
+        followed_users = ""
+        for user in response["data"]:
+            id = user["id"]
+            username= user["username"]
+            followed_users = followed_users + \
+                             "id:" + id + \
+                             ", username:" + username + "\n\n"
         telegram_test_bot.send_message(
             message.chat.id,
-            id_list)
-
+            "you are following:\n\n"+followed_users)
 
     @telegram_test_bot.message_handler(content_types=['text'])  # handle with text
     def handle_text(message):
@@ -168,7 +183,8 @@ def handle():
                         message.chat.id,
                         "Error:\n{}".format(response["errors"][0]["message"]))
         elif "twitterAuthorId=" in message.text:
-            response = twitter_responses.response_twitter_last5tweets_of_the_user(message.text.replace(" ", "").split("=")[1])
+            response = twitter_responses.response_twitter_last5tweets_of_the_user(
+                message.text.replace(" ", "").split("=")[1])
             if "data" in response:
                 for dataItem in response["data"]:
                     telegram_test_bot.send_message(
@@ -180,6 +196,7 @@ def handle():
                 telegram_test_bot.send_message(
                     message.chat.id,
                     "Error:\n{}".format(response["errors"][0]["message"]))
+
     telegram_test_bot.polling(none_stop=True, interval=0)
 
 
