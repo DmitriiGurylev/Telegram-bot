@@ -48,9 +48,10 @@ def handle():
                                        "I'm a bot named {}.\n"
                                        "U can send me next commands\n"
                                        "1) /about, to know some information\n"
-                                       "2) /subscribe, to subscribe Twitter user by name\n"
-                                       "3) /unsubscribe, to unsubscribe Twitter user by name\n"
-                                       "4) /list, to list subscribed Twitter users\n"
+                                       "2) /subscribe, to subscribe Twitter user by username\n"
+                                       "3) /subscribe_by_id, to subscribe Twitter user by id\n"
+                                       "4) /unsubscribe, to unsubscribe Twitter user by name\n"
+                                       "5) /list, to list subscribed Twitter users\n"
                                        # "1) /subscribe, to subscribe Twitter user\n"
                                        .format(
                                            message.from_user.first_name,
@@ -73,6 +74,8 @@ def handle():
 
         if message_text_array[0] == "subscribe":
             subscribe(message)
+        elif message_text_array[0] == "subscribe_by_id":
+            subscribe_by_id(message)
         elif message_text_array[0] == "list":
             get_list(message)
 
@@ -108,6 +111,13 @@ def handle():
 
     def msg_subscribe(user_names_to_subscribe, message):
         response = twitter_responses.response_users_by_username(user_names_to_subscribe)
+        msg_subscribe(response, message)
+
+    def msg_subscribe_by_id(ids_to_subscribe, message):
+        response = twitter_responses.response_users_by_id(ids_to_subscribe)
+        msg_subscribe(response, message)
+
+    def msg_subscribe(response, message):
         msg_error = ""
         msg_ok = ""
         if 'data' in response:
@@ -123,10 +133,19 @@ def handle():
         message_text_array = message.text.split(' ')
 
         users_to_subscribe = message_text_array[1:]
-        if not users_to_subscribe:
-            msg_if_no_users_to_subscribe(message)
-        else:
+        if users_to_subscribe:
             msg_subscribe(users_to_subscribe, message)
+        else:
+            msg_if_no_users_to_subscribe(message)
+
+    def subscribe_by_id(message):
+        message_text_array = message.text.split(' ')
+
+        users_to_subscribe = message_text_array[1:]
+        if users_to_subscribe:
+            msg_subscribe_by_id(users_to_subscribe, message)
+        else:
+            msg_if_no_users_to_subscribe(message)
 
     def get_list(message):
         id_list = []
@@ -138,7 +157,6 @@ def handle():
                 id_list.append(id)
 
         response = twitter_responses.response_users_by_id(id_list)
-        msg_ok = msg_users_if_no_errors(response["data"])
         followed_users = ""
         for user in response["data"]:
             id = user["id"]
