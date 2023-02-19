@@ -8,6 +8,7 @@ from telebot import types
 import config
 import twitter_responses
 from datetime import datetime, timedelta
+import iso8601
 
 twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
@@ -78,6 +79,32 @@ def handle():
             subscribe_by_id(message)
         elif message_text_array[0] == "list":
             get_list(message)
+        elif message_text_array[0] == "get":
+            get_messages_of_user(message)
+
+
+
+    def get_messages_of_user(message):
+        message_text_array = message.text.split(' ')
+        if len(message_text_array)==2:
+            username = message_text_array[1]
+            response = twitter_responses.response_user_by_username(username)
+            id = response["data"][0]["id"]
+            # response = twitter_responses.response_users_by_username(id)
+            response = twitter_responses.response_twitter_last_5_tweets_of_the_user(id)
+            tweets = response["data"]
+            for tweet in tweets:
+                text = tweet["text"]
+                created_at=tweet["created_at"]
+                date = iso8601.parse_date(created_at).strftime('%d-%m-%Y %H:%M:%S')
+
+                telegram_test_bot.send_message(
+                    message.chat.id,
+                    text+"\n\n"+date
+                )
+
+
+
 
     def msg_if_no_users_to_subscribe(message):
         telegram_test_bot.send_message(
@@ -92,11 +119,13 @@ def handle():
                 users_to_subscribe = users_to_subscribe + \
                                      "Succesfully subscribed on user\n" + \
                                      "id: " + user_ok["id"] + ",\n" + \
+                                     "username: " + user_ok["username"] + ",\n" + \
                                      "name: " + user_ok["name"] + "\n\n"
             else:
                 users_to_subscribe = users_to_subscribe + \
                                      "Already subscribed on user\n" + \
                                      "id: " + user_ok["id"] + ",\n" + \
+                                     "username: " + user_ok["username"] + ",\n" + \
                                      "name: " + user_ok["name"] + "\n\n"
             return users_to_subscribe
 
@@ -109,7 +138,7 @@ def handle():
                                                       "reason: " + user_error["detail"] + "\n\n"
         return errors
 
-    def msg_subscribe(user_names_to_subscribe, message):
+    def msg_subscribe_by_username(user_names_to_subscribe, message):
         response = twitter_responses.response_users_by_username(user_names_to_subscribe)
         msg_subscribe(response, message)
 
@@ -134,7 +163,7 @@ def handle():
 
         users_to_subscribe = message_text_array[1:]
         if users_to_subscribe:
-            msg_subscribe(users_to_subscribe, message)
+            msg_subscribe_by_username(users_to_subscribe, message)
         else:
             msg_if_no_users_to_subscribe(message)
 
@@ -201,7 +230,7 @@ def handle():
                         message.chat.id,
                         "Error:\n{}".format(response["errors"][0]["message"]))
         elif "twitterAuthorId=" in message.text:
-            response = twitter_responses.response_twitter_last5tweets_of_the_user(
+            response = twitter_responses.response_twitter_last_5_tweets_of_the_user(
                 message.text.replace(" ", "").split("=")[1])
             if "data" in response:
                 for dataItem in response["data"]:

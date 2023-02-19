@@ -15,6 +15,17 @@ def response_users_by_username(user_names):
     json_response = response.json()
     return json_response
 
+def response_user_by_username(user_name):
+    my_headers = {}
+    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_params = user_name
+    response = requests.get(
+        twitterApi.twitter_users_by_username_url + my_params,
+        headers=my_headers
+    )
+    json_response = response.json()
+    return json_response
+
 
 def response_users_by_id(user_ids):
     my_headers = {}
@@ -27,7 +38,22 @@ def response_users_by_id(user_ids):
     json_response = response.json()
     return json_response
 
-def response_twitter_last5tweets_of_the_user(user_id):  # read data of tweet and deserialize them from API
+
+def response_user_by_id(user_id):
+    my_headers = {}
+    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_params = user_id
+    response = requests.get(
+        twitterApi.twitter_users_by_id_url + my_params,
+        headers=my_headers
+    )
+    json_response = response.json()
+    return json_response
+
+# def responsetweets_by_user():
+
+
+def response_twitter_last_5_tweets_of_the_user(user_id):  # read data of tweet and deserialize them from API
 
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
