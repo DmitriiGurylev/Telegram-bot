@@ -23,18 +23,33 @@ is_bot_started = False
 storage_twitter_subscription = "storage_twitter_subscription.txt"
 
 
-def add_to_storage_subscription(id_to_add):
+def add_to_set_from_file(file):
     id_set = set()
-
-    with open(storage_twitter_subscription, "r") as f:
+    with open(file, "r") as f:
         ids = f.readlines()
         for id in ids:
             id = id.replace("\n", '')
             id_set.add(id)
+    return id_set
 
+
+def add_user_to_storage_subscription(id_to_add):
+    id_set = add_to_set_from_file(storage_twitter_subscription)
     if id_to_add not in id_set:
         with open(storage_twitter_subscription, "a") as f:
             f.write(id_to_add + "\n")
+        return True
+    else:
+        return False
+
+
+def unsubscribe_user_from_storage_subscription(id_to_ununsubscribe):
+    id_set = add_to_set_from_file(storage_twitter_subscription)
+    if id_to_ununsubscribe in id_set:
+        id_set.remove(id_to_ununsubscribe)
+        with open(storage_twitter_subscription, "w") as f:
+            for id in id_set:
+                f.write(id + "\n")
         return True
     else:
         return False
@@ -49,11 +64,11 @@ def handle():
                                        "I'm a bot named {}.\n"
                                        "U can send me next commands\n"
                                        "1) /about, to know some information\n"
-                                       "2) /subscribe, to subscribe Twitter user by username\n"
-                                       "3) /subscribe_by_id, to subscribe Twitter user by id\n"
-                                       "4) /unsubscribe, to unsubscribe Twitter user by name\n"
-                                       "5) /list, to list subscribed Twitter users\n"
-                                       # "1) /subscribe, to subscribe Twitter user\n"
+                                       "2) subscribe, to subscribe Twitter user by username\n"
+                                       "3) subscribe_by_id, to subscribe Twitter user by id\n"
+                                       "4) unsubscribe, to unsubscribe Twitter user by username\n"
+                                       "5) unsubscribe_by_id, to unsubscribe Twitter user by id\n"
+                                       "6) /list, to show list of subscriptions\n"
                                        .format(
                                            message.from_user.first_name,
                                            telegram_test_bot.get_me().first_name)
@@ -81,6 +96,8 @@ def handle():
             get_list(message)
         elif message_text_array[0] == "get":
             get_messages_of_user(message)
+        elif message_text_array[0] == "unsubscribe_by_id":
+            unsubscribe_by_id(message)
 
     def show_messages(message, tweets):
         for tweet in tweets:
@@ -93,17 +110,16 @@ def handle():
                 text + "\n\n" + date
             )
 
-
     def get_messages_of_user(message):
         message_text_array = message.text.split(' ')
-        if len(message_text_array)==2:
+        if len(message_text_array) == 2:
             username = message_text_array[1]
             response = twitter_responses.response_user_by_username(username)
             id = response["data"][0]["id"]
             response = twitter_responses.response_twitter_last_tweets_of_the_user(id, 5)
             tweets = response["data"]
             show_messages(message, tweets)
-        elif len(message_text_array)==3:
+        elif len(message_text_array) == 3:
             number_of_msg = message_text_array[1]
             username = message_text_array[2]
             response = twitter_responses.response_user_by_username(username)
@@ -112,17 +128,22 @@ def handle():
             tweets = response["data"]
             show_messages(message, tweets)
 
-
-    def msg_if_no_users_to_subscribe(message):
+    def subscribe_msg_if_no_users(message):
         telegram_test_bot.send_message(
             message.chat.id,
             "you didn't choose any user to subscribe"
         )
 
-    def msg_users_if_no_errors(resp_data):
+    def unsubscribe_msg_if_no_users(message):
+        telegram_test_bot.send_message(
+            message.chat.id,
+            "you didn't choose any user to unsubscribe"
+        )
+
+    def subscribe_msg_if_no_errors(resp_data):
         users_to_subscribe = ""
         for user_ok in resp_data:
-            if add_to_storage_subscription(user_ok["username"]):
+            if add_user_to_storage_subscription(user_ok["id"]):
                 users_to_subscribe = users_to_subscribe + \
                                      "Succesfully subscribed on user\n" + \
                                      "id: " + user_ok["id"] + ",\n" + \
@@ -136,7 +157,7 @@ def handle():
                                      "name: " + user_ok["name"] + "\n\n"
             return users_to_subscribe
 
-    def msg_users_if_errors(rest_error):
+    def subscribe_msg_if_errors(rest_error):
         errors = ""
         for user_error in rest_error:
             errors = errors + \
@@ -145,43 +166,72 @@ def handle():
                                                       "reason: " + user_error["detail"] + "\n\n"
         return errors
 
-    def msg_subscribe_by_username(user_names_to_subscribe, message):
+    def ununsubscribe_msg_if_errors(id):
+        return "Can't ununsubscribe on user\n" + \
+            "id: " + id + "\n" \
+                          "reason: you are not subscribed this user\n\n"
+
+    def subscribe_users_by_username(user_names_to_subscribe, message):
         response = twitter_responses.response_users_by_username(user_names_to_subscribe)
-        msg_subscribe(response, message)
+        subscribe_msg(response, message)
 
-    def msg_subscribe_by_id(ids_to_subscribe, message):
+    def subscribe_users_by_id(ids_to_subscribe, message):
         response = twitter_responses.response_users_by_id(ids_to_subscribe)
-        msg_subscribe(response, message)
+        subscribe_msg(response, message)
 
-    def msg_subscribe(response, message):
+    def unsubscribe_users_by_id(ids_to_unsubscribe, message):
         msg_error = ""
         msg_ok = ""
-        if 'data' in response:
-            msg_ok = msg_users_if_no_errors(response["data"])
-        if 'errors' in response:
-            msg_error = msg_users_if_errors(response["errors"])
+        for id in ids_to_unsubscribe:
+            if unsubscribe_user_from_storage_subscription(id):
+                msg_ok = msg_ok + ununsubscribe_msg_if_no_errors(id)
+            else:
+                msg_error = msg_error + ununsubscribe_msg_if_errors(id)
         telegram_test_bot.send_message(
             message.chat.id,
             msg_ok + msg_error
         )
+
+    def subscribe_msg(response, message):
+        msg_error = ""
+        msg_ok = ""
+        if 'data' in response:
+            msg_ok = subscribe_msg_if_no_errors(response["data"])
+        if 'errors' in response:
+            msg_error = subscribe_msg_if_errors(response["errors"])
+        telegram_test_bot.send_message(
+            message.chat.id,
+            msg_ok + msg_error
+        )
+
+    def ununsubscribe_msg_if_no_errors(id):
+        return "Succesfully unsubscribed on user\n" + \
+            "id: " + id + "\n\n"
 
     def subscribe(message):
         message_text_array = message.text.split(' ')
 
         users_to_subscribe = message_text_array[1:]
         if users_to_subscribe:
-            msg_subscribe_by_username(users_to_subscribe, message)
+            subscribe_users_by_username(users_to_subscribe, message)
         else:
-            msg_if_no_users_to_subscribe(message)
+            subscribe_msg_if_no_users(message)
 
     def subscribe_by_id(message):
         message_text_array = message.text.split(' ')
-
-        users_to_subscribe = message_text_array[1:]
-        if users_to_subscribe:
-            msg_subscribe_by_id(users_to_subscribe, message)
+        user_ids_to_subscribe = message_text_array[1:]
+        if user_ids_to_subscribe:
+            subscribe_users_by_id(user_ids_to_subscribe, message)
         else:
-            msg_if_no_users_to_subscribe(message)
+            subscribe_msg_if_no_users(message)
+
+    def unsubscribe_by_id(message):
+        message_text_array = message.text.split(' ')
+        user_ids_to_ununsubscribe = message_text_array[1:]
+        if user_ids_to_ununsubscribe:
+            unsubscribe_users_by_id(user_ids_to_ununsubscribe, message)
+        else:
+            unsubscribe_msg_if_no_users(message)
 
     def get_list(message):
         id_list = []
@@ -196,13 +246,13 @@ def handle():
         followed_users = ""
         for user in response["data"]:
             id = user["id"]
-            username= user["username"]
+            username = user["username"]
             followed_users = followed_users + \
                              "id:" + id + \
                              ", username:" + username + "\n\n"
         telegram_test_bot.send_message(
             message.chat.id,
-            "you are following:\n\n"+followed_users)
+            "you are following:\n\n" + followed_users)
 
     @telegram_test_bot.message_handler(content_types=['text'])  # handle with text
     def handle_text(message):
