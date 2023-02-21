@@ -53,7 +53,7 @@ def response_user_by_id(user_id):
 # def responsetweets_by_user():
 
 
-def response_twitter_last_5_tweets_of_the_user(user_id):  # read data of tweet and deserialize them from API
+def response_twitter_last_tweets_of_the_user(user_id, number_of_msg):  # read data of tweet and deserialize them from API
 
     my_headers = {}
     my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
@@ -61,7 +61,7 @@ def response_twitter_last_5_tweets_of_the_user(user_id):  # read data of tweet a
     my_params = twitterApi.twitter_users_tweets.copy()
 
     my_params['tweet.fields'] = "created_at"
-    my_params['max_results'] = 5
+    my_params['max_results'] = number_of_msg
 
     response = requests.get(
         twitterApi.twitter_users_tweets_url.replace(":id", user_id),

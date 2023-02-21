@@ -82,6 +82,16 @@ def handle():
         elif message_text_array[0] == "get":
             get_messages_of_user(message)
 
+    def show_messages(message, tweets):
+        for tweet in tweets:
+            text = tweet["text"]
+            created_at = tweet["created_at"]
+            date = iso8601.parse_date(created_at).strftime('%d-%m-%Y %H:%M:%S')
+
+            telegram_test_bot.send_message(
+                message.chat.id,
+                text + "\n\n" + date
+            )
 
 
     def get_messages_of_user(message):
@@ -90,20 +100,17 @@ def handle():
             username = message_text_array[1]
             response = twitter_responses.response_user_by_username(username)
             id = response["data"][0]["id"]
-            # response = twitter_responses.response_users_by_username(id)
-            response = twitter_responses.response_twitter_last_5_tweets_of_the_user(id)
+            response = twitter_responses.response_twitter_last_tweets_of_the_user(id, 5)
             tweets = response["data"]
-            for tweet in tweets:
-                text = tweet["text"]
-                created_at=tweet["created_at"]
-                date = iso8601.parse_date(created_at).strftime('%d-%m-%Y %H:%M:%S')
-
-                telegram_test_bot.send_message(
-                    message.chat.id,
-                    text+"\n\n"+date
-                )
-
-
+            show_messages(message, tweets)
+        elif len(message_text_array)==3:
+            number_of_msg = message_text_array[1]
+            username = message_text_array[2]
+            response = twitter_responses.response_user_by_username(username)
+            id = response["data"][0]["id"]
+            response = twitter_responses.response_twitter_last_tweets_of_the_user(id, number_of_msg)
+            tweets = response["data"]
+            show_messages(message, tweets)
 
 
     def msg_if_no_users_to_subscribe(message):
@@ -230,7 +237,7 @@ def handle():
                         message.chat.id,
                         "Error:\n{}".format(response["errors"][0]["message"]))
         elif "twitterAuthorId=" in message.text:
-            response = twitter_responses.response_twitter_last_5_tweets_of_the_user(
+            response = twitter_responses.response_twitter_last_tweets_of_the_user(
                 message.text.replace(" ", "").split("=")[1])
             if "data" in response:
                 for dataItem in response["data"]:
