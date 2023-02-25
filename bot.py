@@ -20,6 +20,79 @@ photo_number = 0
 is_bot_started = False
 
 
+def get_messages_of_user(message):
+    message_text_array = message.text.split(' ')
+    if len(message_text_array) == 2:
+        username = message_text_array[1]
+        response = twitter_responses.response_user_by_username(username)
+        id = response["data"][0]["id"]
+        response = twitter_responses.response_twitter_last_tweets_of_the_user(id, 5)
+        tweets = response["data"]
+        show_messages(message, tweets)
+    elif len(message_text_array) == 3:
+        number_of_msg = message_text_array[1]
+        username = message_text_array[2]
+        response = twitter_responses.response_user_by_username(username)
+        id = response["data"][0]["id"]
+        response = twitter_responses.response_twitter_last_tweets_of_the_user(id, number_of_msg)
+        tweets = response["data"]
+        show_messages(message, tweets)
+
+
+def subscribe_users_by_username(user_names_to_subscribe, message):
+    response = twitter_responses.response_users_by_username(user_names_to_subscribe)
+    subscribe_msg(response, message)
+
+
+def unsubscribe_users_by_username(usernames_to_unsubscribe, message):
+    response = twitter_responses.response_users_by_username(usernames_to_unsubscribe)
+    unsubscribe_msg(response, message)
+
+
+def subscribe_users_by_id(ids_to_subscribe, message):
+    response = twitter_responses.response_users_by_id(ids_to_subscribe)
+    subscribe_msg(response, message)
+
+
+def subscribe(message):
+    message_text_array = message.text.split(' ')
+    users_to_subscribe = message_text_array[1:]
+    if users_to_subscribe:
+        subscribe_users_by_username(users_to_subscribe, message)
+    else:
+        subscribe_msg_if_no_users(message)
+
+
+def unsubscribe(message):
+    message_text_array = message.text.split(' ')
+    usernames_to_unsubscribe = message_text_array[1:]
+    if usernames_to_unsubscribe:
+        unsubscribe_users_by_username(usernames_to_unsubscribe, message)
+    else:
+        unsubscribe_msg_if_no_users(message)
+
+
+def subscribe_by_id(message):
+    message_text_array = message.text.split(' ')
+    user_ids_to_subscribe = message_text_array[1:]
+    if user_ids_to_subscribe:
+        subscribe_users_by_id(user_ids_to_subscribe, message)
+    else:
+        subscribe_msg_if_no_users(message)
+
+
+def unsubscribe_by_id(message):
+    message_text_array = message.text.split(' ')
+    user_ids_to_unsubscribe = message_text_array[1:]
+    if user_ids_to_unsubscribe:
+        unsubscribe_users_by_id(user_ids_to_unsubscribe, message)
+    else:
+        unsubscribe_msg_if_no_users(message)
+
+
+def show_list(message):
+    get_list(message)
+
 
 def handle():
     @t_bot.message_handler(commands=['start'])  # handle the command "Start"
@@ -51,77 +124,6 @@ def handle():
             case _:
                 "ЗАГЛУШКА"
 
-    def get_messages_of_user(message):
-        message_text_array = message.text.split(' ')
-        if len(message_text_array) == 2:
-            username = message_text_array[1]
-            response = twitter_responses.response_user_by_username(username)
-            id = response["data"][0]["id"]
-            response = twitter_responses.response_twitter_last_tweets_of_the_user(id, 5)
-            tweets = response["data"]
-            show_messages(message, tweets)
-        elif len(message_text_array) == 3:
-            number_of_msg = message_text_array[1]
-            username = message_text_array[2]
-            response = twitter_responses.response_user_by_username(username)
-            id = response["data"][0]["id"]
-            response = twitter_responses.response_twitter_last_tweets_of_the_user(id, number_of_msg)
-            tweets = response["data"]
-            show_messages(message, tweets)
-
-
-
-
-
-
-    def subscribe_users_by_username(user_names_to_subscribe, message):
-        response = twitter_responses.response_users_by_username(user_names_to_subscribe)
-        subscribe_msg(response, message)
-
-    def unsubscribe_users_by_username(user_ids_to_unsubscribe, message):
-        response = twitter_responses.response_users_by_username(user_ids_to_unsubscribe)
-        unsubscribe_msg(response, message)
-
-    def subscribe_users_by_id(ids_to_subscribe, message):
-        response = twitter_responses.response_users_by_id(ids_to_subscribe)
-        subscribe_msg(response, message)
-
-
-
-    def subscribe(message):
-        message_text_array = message.text.split(' ')
-        users_to_subscribe = message_text_array[1:]
-        if users_to_subscribe:
-            subscribe_users_by_username(users_to_subscribe, message)
-        else:
-            subscribe_msg_if_no_users(message)
-
-    def unsubscribe(message):
-        message_text_array = message.text.split(' ')
-        user_ids_to_unsubscribe = message_text_array[1:]
-        if user_ids_to_unsubscribe:
-            unsubscribe_users_by_username(user_ids_to_unsubscribe, message)
-        else:
-            unsubscribe_msg_if_no_users(message)
-
-    def subscribe_by_id(message):
-        message_text_array = message.text.split(' ')
-        user_ids_to_subscribe = message_text_array[1:]
-        if user_ids_to_subscribe:
-            subscribe_users_by_id(user_ids_to_subscribe, message)
-        else:
-            subscribe_msg_if_no_users(message)
-
-    def unsubscribe_by_id(message):
-        message_text_array = message.text.split(' ')
-        user_ids_to_unsubscribe = message_text_array[1:]
-        if user_ids_to_unsubscribe:
-            unsubscribe_users_by_id(user_ids_to_unsubscribe, message)
-        else:
-            unsubscribe_msg_if_no_users(message)
-
-    def show_list(message):
-        get_list(message)
 
 thread1 = Thread(target=handle)
 # thread2 = Thread(target=check_new_tweets_with_interval)
