@@ -4,9 +4,8 @@ import config
 import twitterApi
 
 
-def response_users_by_username(user_names):
-    my_headers = {}
-    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+def response_user_by_username(user_names):
+    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
     my_params = ','.join(user_names)
     response = requests.get(
         twitterApi.twitter_users_by_username_url + my_params,
@@ -17,8 +16,7 @@ def response_users_by_username(user_names):
 
 
 def response_users_by_id(user_ids):
-    my_headers = {}
-    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
     my_params = ','.join(user_ids)
     response = requests.get(
         twitterApi.twitter_users_by_id_url + my_params,
@@ -29,8 +27,7 @@ def response_users_by_id(user_ids):
 
 
 def response_user_by_id(user_id):
-    my_headers = {}
-    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
     my_params = user_id
     response = requests.get(
         twitterApi.twitter_users_by_id_url + my_params,
@@ -40,13 +37,8 @@ def response_user_by_id(user_id):
     return json_response
 
 
-# def responsetweets_by_user():
-
-
 def response_twitter_last_tweets_of_the_user(user_id, number_of_msg):  # read data of tweet and deserialize them from API
-
-    my_headers = {}
-    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
     my_params = twitterApi.twitter_users_tweets.copy()
 
@@ -64,8 +56,7 @@ def response_twitter_last_tweets_of_the_user(user_id, number_of_msg):  # read da
 
 # read data of tweet and deserialize them from API
 def response_twitter_user_subscribe_tweets(user_id, start_time, end_time):
-    my_headers = {}
-    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
     my_params = twitterApi.twitter_users_tweets.copy()
     my_params['tweet.fields'] = "attachments," \
@@ -98,9 +89,7 @@ def response_twitter_user_subscribe_tweets(user_id, start_time, end_time):
 
 
 def response_twitter_tweets(messages_id):  # read data of tweet and deserialize them from API
-
-    my_headers = {}
-    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
     my_params = twitterApi.twitter_tweets.copy()
     my_params['ids'] = messages_id
@@ -115,9 +104,7 @@ def response_twitter_tweets(messages_id):  # read data of tweet and deserialize 
 
 
 def response_statuses_user_timeline(user_id):  # read data and deserialize them from API
-
-    my_headers = {}
-    my_headers['Authorization'] = 'Bearer ' + config.twitter_bearer_token
+    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
     my_params = twitterApi.twitter_user_timeline.copy()
     my_params['user_id'] = user_id

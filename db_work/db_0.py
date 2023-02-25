@@ -1,12 +1,15 @@
 import redis
+import redis_connection as r
 
-pool = redis.ConnectionPool(host='localhost', port=6379, db=0)
+# DB for adding new subscribtions.
+db_number = 0
+pool = redis.ConnectionPool(host=r.host, port=r.port, db=db_number)
 redis = redis.Redis(connection_pool=pool)
 
 
 def get_list_by_chat_id(chat_id):
     res = redis.smembers(chat_id)
-    return res
+    return [i.decode("utf-8") for i in res]
 
 
 def add_user_to_storage_subscription(id_to_add, chat_id):
