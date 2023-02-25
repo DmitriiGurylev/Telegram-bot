@@ -3,31 +3,31 @@ import iso8601
 
 from bot_init import t_bot
 from db_work.work_with_db import add_user_to_storage_subscription, unsubscribe_user_from_storage_subscription, \
-    add_to_set_from_file, storage_twitter_subscription
+    get_list_by_chat_id
 
 
 def send_start_message(message):
     t_bot.send_message(message.chat.id,  # start message by bot
-                                   "Hi, {}!\n"
-                                   "I'm a bot named {}.\n"
-                                   "U can send me next commands\n"
-                                   "1) /about, to know some information\n"
-                                   "2) subscribe, to subscribe Twitter user by username\n"
-                                   "3) subscribe_by_id, to subscribe Twitter user by id\n"
-                                   "4) unsubscribe, to unsubscribe Twitter user by username\n"
-                                   "5) unsubscribe_by_id, to unsubscribe Twitter user by id\n"
-                                   "6) /list, to show list of subscriptions\n"
+                       "Hi, {}!\n"
+                       "I'm a bot named {}.\n"
+                       "U can send me next commands\n"
+                       "1) /about, to know some information\n"
+                       "2) subscribe, to subscribe Twitter user by username\n"
+                       "3) subscribe_by_id, to subscribe Twitter user by id\n"
+                       "4) unsubscribe, to unsubscribe Twitter user by username\n"
+                       "5) unsubscribe_by_id, to unsubscribe Twitter user by id\n"
+                       "6) /list, to show list of subscriptions\n"
                        .format(
-                                       message.from_user.first_name,
-                                       t_bot.get_me().first_name)
+                           message.from_user.first_name,
+                           t_bot.get_me().first_name)
                        )
 
 
 def send_about_message(message):
     t_bot.send_message(message.chat.id,
-                                   "It was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
-                                   "[VK](vk.com/id46566190)\n"  # VK link
-                                   "[Instagram](instagram.com/dmitrygurylev/)",  # Instagram link
+                       "It was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
+                       "[VK](vk.com/id46566190)\n"  # VK link
+                       "[Instagram](instagram.com/dmitrygurylev/)",  # Instagram link
                        parse_mode="Markdown")
 
 
@@ -70,10 +70,10 @@ def unsubscribe_users_by_id(ids_to_unsubscribe, message):
     )
 
 
-def subscribe_msg_if_no_errors(resp_data):
+def subscribe_msg_if_no_errors(resp_data, chat_id):
     users_to_subscribe = ""
     for user_ok in resp_data:
-        if add_user_to_storage_subscription(user_ok["id"]):
+        if add_user_to_storage_subscription(user_ok["id"], chat_id):
             users_to_subscribe = users_to_subscribe + \
                                  "Succesfully subscribed on user\n" + \
                                  "id: " + user_ok["id"] + ",\n" + \
@@ -130,7 +130,7 @@ def subscribe_msg(response, message):
     msg_error = ""
     msg_ok = ""
     if 'data' in response:
-        msg_ok = subscribe_msg_if_no_errors(response["data"])
+        msg_ok = subscribe_msg_if_no_errors(response["data"], message.chat.id)
     if 'errors' in response:
         msg_error = subscribe_msg_if_errors(response["errors"])
     t_bot.send_message(
@@ -164,7 +164,11 @@ def show_messages(message, tweets):
         )
 
 def get_list(message):
-    id_list = add_to_set_from_file(storage_twitter_subscription)
+    t_bot.send_message(
+        message.chat.id,
+        "chat_id: " + str(message.chat.id))
+
+    id_list = get_list_by_chat_id(message.chat.id)
 
     response = twitter_responses.response_users_by_id(id_list)
     followed_users = ""
