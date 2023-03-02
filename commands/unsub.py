@@ -1,6 +1,5 @@
 import twitter_responses
-from db_work.db_0 import get_list_by_chat_id
-from write_messages import unsubscribe_msg, unsubscribe_msg_if_no_users
+from write_messages import unsubscribe_msg, unsubscribe_msg_if_no_users, get_list_of_ids_by_chat_id
 
 
 def unsubscribe_by_id(message):
@@ -34,5 +33,5 @@ def unsubscribe_users_by_id(ids_to_unsubscribe, message):
 
 
 def unsubscribe_from_all(message):
-    id_list = get_list_by_chat_id(message.chat.id)
+    id_list = get_list_of_ids_by_chat_id(message.chat.id)
     unsubscribe_users_by_id(id_list, message)

@@ -2,8 +2,7 @@ import iso8601
 
 import twitter_responses
 from bot_init import tele_bot
-from db_work.db_0 import get_list_by_chat_id, add_user_to_storage_subscription, \
-    unsubscribe_user_from_storage_subscription
+from db_work.db_1 import update_tweet_in_db, remove_twitter_user, get_map_of_updated_tweets_by_chat_id
 
 
 def send_start_message(message):
@@ -51,7 +50,7 @@ def show_meta(message, username):
 
 
 def get_list(message):
-    id_list = get_list_by_chat_id(message.chat.id)
+    id_list = get_list_of_ids_by_chat_id(message.chat.id)
 
     response = twitter_responses.response_users_by_id(id_list)
     followed_users = ""
@@ -158,3 +157,20 @@ def unsubscribe_msg_if_errors(rest_error):
                  "name: " + user_error["value"] + "\n" \
                                                   "reason: " + user_error["detail"] + "\n\n"
     return errors
+
+
+def add_user_to_storage_subscription(user_id, chat_id):
+    response = twitter_responses.get_last_tweet_of_user(user_id)
+    tweet_ids_set = set()
+    for tweet in response["data"]:
+        tweet_ids_set.add(tweet["id"])
+    max_id = max(tweet_ids_set)
+    return update_tweet_in_db(user_id, max_id, chat_id)
+
+
+def unsubscribe_user_from_storage_subscription(user_id, chat_id):
+    res = remove_twitter_user(user_id, chat_id)
+
+
+def get_list_of_ids_by_chat_id(chat_id):
+    return get_map_of_updated_tweets_by_chat_id(chat_id)
