@@ -56,29 +56,29 @@ def response_twitter_last_tweets_of_the_user(user_id,
 
 
 # read data of tweet and deserialize them from API
-def response_twitter_user_subscribe_tweets(user_id, start_time, end_time):
+def response_twitter_user_subscribe_tweets(user_id, since_id):
     my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
     my_params = twitter_api.twitter_users_tweets.copy()
-    my_params['tweet.fields'] = "attachments," \
-                                "created_at," \
-                                "author_id," \
-                                "context_annotations," \
-                                "conversation_id," \
-                                "entities," \
-                                "geo," \
-                                "id," \
-                                "in_reply_to_user_id," \
-                                "lang," \
-                                "public_metrics," \
-                                "possibly_sensitive," \
-                                "referenced_tweets," \
-                                "reply_settings," \
-                                "source," \
-                                "text," \
-                                "withheld"
-    my_params['start_time'] = start_time
-    my_params['end_time'] = end_time
+    # my_params['tweet.fields'] = "attachments," \
+    #                             "created_at," \
+    #                             "author_id," \
+    #                             "context_annotations," \
+    #                             "conversation_id," \
+    #                             "entities," \
+    #                             "geo," \
+    #                             "id," \
+    #                             "in_reply_to_user_id," \
+    #                             "lang," \
+    #                             "public_metrics," \
+    #                             "possibly_sensitive," \
+    #                             "referenced_tweets," \
+    #                             "reply_settings," \
+    #                             "source," \
+    #                             "text," \
+    #                             "withheld"
+    # my_params['start_time'] = start_time
+    my_params['since_id'] = since_id
 
     response = requests.get(
         twitter_api.twitter_users_tweets_url.replace(":id", user_id),

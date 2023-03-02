@@ -1,3 +1,4 @@
+import time
 from threading import Thread
 
 import tweepy
@@ -7,7 +8,9 @@ import twitter_responses
 from bot_init import tele_bot
 from commands.sub import subscribe, subscribe_by_id
 from commands.unsub import unsubscribe, unsubscribe_by_id, unsubscribe_from_all
-from write_messages import send_start_message, send_about_message, show_messages, get_list, show_meta
+from db_work.db_1 import get_chat_ids, update_tweet_in_db
+from write_messages import send_start_message, send_about_message, show_messages, get_list_of_username_ids, show_meta, \
+    get_list_of_user_ids
 
 twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
@@ -17,6 +20,41 @@ dtformat = '%Y-%m-%dT%H:%M:%SZ'
 flag_for_zero = 0
 photo_number = 0
 is_bot_started = False
+
+
+def check_new_tweets_with_interval():
+    while True:
+        time.sleep(1)
+
+        chat_ids = get_chat_ids()
+        for chat_id in chat_ids:
+
+            user_ids = get_list_of_user_ids(chat_id)
+            for user_id in user_ids:
+
+                response = twitter_responses.response_twitter_user_subscribe_tweets(
+                    user_id,
+                    since_id=1
+                )
+                is_any_new_tweets = False
+
+                if response["meta"]["result_count"] == 0:
+                    res1 = 0
+                else:
+                    new_tweets = response["data"]
+                    is_any_new_tweets = True
+                    # TODO добавить последний твит в БД
+                    # TODO отправить новые твиты в телеграм
+                    tweet_ids_list = [tweet["id"] for tweet in new_tweets]
+                    newest_tweet_id = max(tweet_ids_list)
+
+                    res = update_tweet_in_db(user_id, newest_tweet_id, chat_id)
+
+                    for tweet in new_tweets:
+                        tele_bot.send_message(
+                            chat_id,
+                            tweet["text"]
+                        )
 
 
 def get_messages_of_user(message):
@@ -44,7 +82,7 @@ def get_messages_of_user(message):
 
 
 def show_list(message):
-    get_list(message)
+    get_list_of_username_ids(message)
 
 
 def handle():
@@ -55,6 +93,10 @@ def handle():
     @tele_bot.message_handler(commands=['about'])  # handle with "about" command
     def about_reply(message):
         send_about_message(message)
+
+    @tele_bot.message_handler(commands=['get'])  # handle with "get" command
+    def get_reply(message):
+        get_messages_of_user(message)
 
     @tele_bot.message_handler(commands=['list'])  # handle with "about" command
     def list_reply(message):
@@ -86,6 +128,9 @@ def handle():
 
 
 thread1 = Thread(target=handle)
-thread1.start()
-tele_bot.polling(non_stop=True)
+# thread2 = Thread(target=check_new_tweets_with_interval)
 
+thread1.start()
+# thread2.start()
+
+tele_bot.polling(non_stop=True)

@@ -2,7 +2,7 @@ import iso8601
 
 import twitter_responses
 from bot_init import tele_bot
-from db_work.db_1 import update_tweet_in_db, remove_twitter_user, get_map_of_updated_tweets_by_chat_id
+from db_work.db_1 import update_tweet_in_db, remove_twitter_user, get_list_of_user_ids
 
 
 def send_start_message(message):
@@ -16,6 +16,8 @@ def send_start_message(message):
                           "4) unsub, to unsubscribe Twitter user by username\n"
                           "5) unsub_id, to unsubscribe Twitter user by id\n"
                           "6) /list, to show list of subscriptions\n"
+                          "7) /get, to get last tweets\n"
+
                           .format(
                               message.from_user.first_name,
                               tele_bot.get_me().first_name)
@@ -49,15 +51,17 @@ def show_meta(message, username):
     )
 
 
-def get_list(message):
-    id_list = get_list_of_ids_by_chat_id(message.chat.id)
+def get_list_of_username_ids(message):
+    id_list = get_list_of_user_ids(message.chat.id)
 
     response = twitter_responses.response_users_by_id(id_list)
     followed_users = ""
     for user in response["data"]:
         user_id = user["id"]
         username = user["username"]
-        followed_users = followed_users + "id:" + user_id + ", username:" + username + "\n\n"
+        followed_users = followed_users + \
+                         "id:" + user_id + \
+                         ", username: " + username + "\n\n"
     tele_bot.send_message(
         message.chat.id,
         "you are following:\n\n" + followed_users)
@@ -132,7 +136,7 @@ def unsubscribe_msg_if_no_errors(resp_data, chat_id):
                                    "name: " + user_ok["name"] + "\n\n"
         else:
             users_to_unsubscribe = users_to_unsubscribe + \
-                                   "Already unsubscribed on user\n" + \
+                                   "You are not subscribed on user\n" + \
                                    "id: " + user_ok["id"] + ",\n" + \
                                    "username: " + user_ok["username"] + ",\n" + \
                                    "name: " + user_ok["name"] + "\n\n"
@@ -161,16 +165,9 @@ def unsubscribe_msg_if_errors(rest_error):
 
 def add_user_to_storage_subscription(user_id, chat_id):
     response = twitter_responses.get_last_tweet_of_user(user_id)
-    tweet_ids_set = set()
-    for tweet in response["data"]:
-        tweet_ids_set.add(tweet["id"])
-    max_id = max(tweet_ids_set)
-    return update_tweet_in_db(user_id, max_id, chat_id)
+    latest_tweet_id = -1 if response["meta"]["result_count"] == 0 else response["meta"]["newest_id"]
+    return update_tweet_in_db(user_id, latest_tweet_id, chat_id)
 
 
 def unsubscribe_user_from_storage_subscription(user_id, chat_id):
-    res = remove_twitter_user(user_id, chat_id)
-
-
-def get_list_of_ids_by_chat_id(chat_id):
-    return get_map_of_updated_tweets_by_chat_id(chat_id)
+    return remove_twitter_user(user_id, chat_id)

@@ -10,10 +10,19 @@ pool = redis.ConnectionPool(host=redis_connection.host, port=redis_connection.po
 redis = redis.Redis(connection_pool=pool)
 
 
-def get_map_of_updated_tweets_by_chat_id(chat_id):
-    res = redis.hkeys(chat_id)
+def get_chat_ids():  # get list of chat ids
+    res = redis.keys()
     return [i.decode("utf-8") for i in res]
-    # return res
+
+
+def get_list_of_user_ids(chat_id):  # get list of Twitter user ids
+    res = redis.hkeys(chat_id)  # get list of Twitter user ids
+    return [i.decode("utf-8") for i in res]
+
+
+def get_list_of_newest_tweets(chat_id, user_id):
+    res = redis.hget(chat_id, user_id)
+    return [i.decode("utf-8") for i in res]
 
 
 def update_tweet_in_db(twitter_user_id, new_tweet_id, chat_id):
