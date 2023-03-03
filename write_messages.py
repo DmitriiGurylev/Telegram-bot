@@ -6,26 +6,23 @@ from db_work.db_1 import update_tweet_in_db, remove_twitter_user, get_list_of_us
 
 
 def send_start_message(message):
-    msg = "Hi, {}!\n"
-    "I'm a bot named {}.\n"
-    "U can send me next commands\n"
-    "1) /about, to know some information\n"
-    "2) sub, to subscribe Twitter user by username\n"
-    "3) sub_id, to subscribe Twitter user by id\n"
-    "4) unsub, to unsubscribe Twitter user by username\n"
-    "5) unsub_id, to unsubscribe Twitter user by id\n"
-    "6) /list, to show list of subscriptions\n"
-    "7) /get, to get last tweets\n".format(
-        message.from_user.first_name,
-        tele_bot.get_me().first_name
-    )
+    msg = "Hi, " + message.from_user.first_name + "!\n" + \
+          "I'm a bot named " + tele_bot.get_me().first_name + ".\n" + \
+          "U can send me next commands\n" + \
+          "1) /about, to know some information\n" + \
+          "2) sub, to subscribe Twitter user by username\n" + \
+          "3) sub_id, to subscribe Twitter user by id\n" + \
+          "4) unsub, to unsubscribe Twitter user by username\n" + \
+          "5) unsub_id, to unsubscribe Twitter user by id\n" + \
+          "6) /list, to show list of subscriptions\n" + \
+          "7) /get, to get last tweets\n"
     send_msg(message.chat.id, msg)
 
 
 def send_about_message(chat_id):
-    msg = "It was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
-    "[VK](vk.com/id46566190)\n"  # VK link
-    "[Instagram](instagram.com/dmitrygurylev/)"
+    msg = "It was created by [Dmitry](tg://user?id={416544613}).\n" \
+          "[VK](vk.com/id46566190)\n" \
+          "[Instagram](instagram.com/dmitrygurylev/)"
     send_msg(chat_id, msg)
 
 
@@ -38,7 +35,7 @@ def show_messages(chat_id, tweets):
 
 
 def show_meta(message, username):
-    send_msg(message.chat.id,  "there is no user '{}'".format(username))
+    send_msg(message.chat.id, "there is no user '"+username+"'")
 
 
 def get_list_of_username_ids(chat_id):
@@ -55,7 +52,7 @@ def get_list_of_username_ids(chat_id):
             followed_users = followed_users + \
                              "id:" + user_id + \
                              ", username: " + username + "\n\n"
-        send_msg(chat_id,  "you are following:\n\n" + followed_users)
+        send_msg(chat_id, "you are following:\n\n" + followed_users)
 
 
 def subscribe_msg(response, chat_id):
@@ -65,7 +62,7 @@ def subscribe_msg(response, chat_id):
         msg_ok = subscribe_msg_if_no_errors(response["data"], chat_id)
     if 'errors' in response:
         msg_error = subscribe_msg_if_errors(response["errors"])
-    send_msg(chat_id,  msg_ok + msg_error)
+    send_msg(chat_id, msg_ok + msg_error)
 
 
 def subscribe_msg_if_no_users(chat_id):
@@ -80,7 +77,6 @@ def unsubscribe_msg(response, chat_id):
     if 'errors' in response:
         msg_error = unsubscribe_msg_if_errors(response["errors"])
     send_msg(chat_id, msg_ok + msg_error)
-
 
 
 def unsubscribe_msg_if_no_users(chat_id):
