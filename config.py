@@ -2,7 +2,7 @@
 #  здесь хранится токен бота, ключи Twitter
 
 # Telegram-bot token
-bot_token = '1104755099:AAE85nbvyYOkKZIOJo30VvCM3ophDbSwALA'
+telegram_bot_token = '1104755099:AAE85nbvyYOkKZIOJo30VvCM3ophDbSwALA'
 
 # twitter
 twitter_consumer_key = 'LicadjeJkeIo41jOzyiotwFXv'
