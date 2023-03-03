@@ -10,7 +10,7 @@ from commands.sub import subscribe, subscribe_by_id
 from commands.unsub import unsubscribe, unsubscribe_by_id, unsubscribe_from_all
 from db_work.db_1 import get_chat_ids, update_tweet_in_db, get_list_of_newest_tweets
 from write_messages import send_start_message, send_about_message, show_messages, get_list_of_username_ids, \
-    get_list_of_user_ids, show_meta
+    get_list_of_user_ids, show_meta, send_msg
 
 twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
@@ -73,6 +73,9 @@ def get_messages_of_user(message):
         response = twitter_responses.response_user_by_username(username)
         user_id = response["data"][0]["id"]
         response = twitter_responses.response_twitter_last_tweets_of_the_user(user_id, number_of_msg)
+    else:
+        send_msg(message.chat.id, "you didn't choose Twitter user to get messages")
+        return
 
     if "data" not in response:
         show_meta(message.chat.id, username)
@@ -81,8 +84,8 @@ def get_messages_of_user(message):
         show_messages(message.chat.id, tweets)
 
 
-def show_list(chat_id):
-    get_list_of_username_ids(chat_id)
+def show_list(message):
+    get_list_of_username_ids(message.chat.id)
 
 
 def handle():
@@ -112,7 +115,7 @@ def handle():
             case "sub_id":
                 subscribe_by_id(message)
             case "list":
-                show_list(message.chat.id)
+                show_list(message)
             case "about":
                 send_about_message(message)
             case "get":
