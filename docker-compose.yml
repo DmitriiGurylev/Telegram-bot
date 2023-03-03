@@ -1,0 +1,18 @@
+# NOTE: This Docker image is for development purposes only.
+
+version: "3"
+
+services:
+  bot:
+    build: .
+    image: telegram-twitter-bot
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    entrypoint: redis-server --appendonly yes
