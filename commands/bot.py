@@ -75,14 +75,14 @@ def get_messages_of_user(message):
         response = twitter_responses.response_twitter_last_tweets_of_the_user(user_id, number_of_msg)
 
     if "data" not in response:
-        show_meta(message, username)
+        show_meta(message.chat.id, username)
     else:
         tweets = response["data"]
-        show_messages(message, tweets)
+        show_messages(message.chat.id, tweets)
 
 
-def show_list(message):
-    get_list_of_username_ids(message)
+def show_list(chat_id):
+    get_list_of_username_ids(chat_id)
 
 
 def handle():
@@ -92,7 +92,7 @@ def handle():
 
     @tele_bot.message_handler(commands=['about'])  # handle with "about" command
     def about_reply(message):
-        send_about_message(message)
+        send_about_message(message.chat.id)
 
     @tele_bot.message_handler(commands=['get'])  # handle with "get" command
     def get_reply(message):
@@ -112,7 +112,7 @@ def handle():
             case "sub_id":
                 subscribe_by_id(message)
             case "list":
-                show_list(message)
+                show_list(message.chat.id)
             case "about":
                 send_about_message(message)
             case "get":
@@ -122,7 +122,7 @@ def handle():
             case "unsub_id":
                 unsubscribe_by_id(message)
             case "wipe":
-                unsubscribe_from_all(message)
+                unsubscribe_from_all(message.chat.id)
             case _:
                 "ЗАГЛУШКА"
 

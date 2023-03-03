@@ -6,57 +6,46 @@ from db_work.db_1 import update_tweet_in_db, remove_twitter_user, get_list_of_us
 
 
 def send_start_message(message):
-    tele_bot.send_message(message.chat.id,  # start message by bot
-                          "Hi, {}!\n"
-                          "I'm a bot named {}.\n"
-                          "U can send me next commands\n"
-                          "1) /about, to know some information\n"
-                          "2) sub, to subscribe Twitter user by username\n"
-                          "3) sub_id, to subscribe Twitter user by id\n"
-                          "4) unsub, to unsubscribe Twitter user by username\n"
-                          "5) unsub_id, to unsubscribe Twitter user by id\n"
-                          "6) /list, to show list of subscriptions\n"
-                          "7) /get, to get last tweets\n"
-
-                          .format(
-                              message.from_user.first_name,
-                              tele_bot.get_me().first_name)
-                          )
+    msg = "Hi, {}!\n"
+    "I'm a bot named {}.\n"
+    "U can send me next commands\n"
+    "1) /about, to know some information\n"
+    "2) sub, to subscribe Twitter user by username\n"
+    "3) sub_id, to subscribe Twitter user by id\n"
+    "4) unsub, to unsubscribe Twitter user by username\n"
+    "5) unsub_id, to unsubscribe Twitter user by id\n"
+    "6) /list, to show list of subscriptions\n"
+    "7) /get, to get last tweets\n".format(
+        message.from_user.first_name,
+        tele_bot.get_me().first_name
+    )
+    send_msg(message.chat.id, msg)
 
 
-def send_about_message(message):
-    tele_bot.send_message(message.chat.id,
-                          "It was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
-                          "[VK](vk.com/id46566190)\n"  # VK link
-                          "[Instagram](instagram.com/dmitrygurylev/)",  # Instagram link
-                          parse_mode="Markdown")
+def send_about_message(chat_id):
+    msg = "It was created by [Dmitry](tg://user?id={416544613}).\n"  # Telegram link
+    "[VK](vk.com/id46566190)\n"  # VK link
+    "[Instagram](instagram.com/dmitrygurylev/)"
+    send_msg(chat_id, msg)
 
 
-def show_messages(message, tweets):
+def show_messages(chat_id, tweets):
     for tweet in tweets:
         text = tweet["text"]
         created_at = tweet["created_at"]
         date = iso8601.parse_date(created_at).strftime('%d-%m-%Y %H:%M:%S')
-
-        tele_bot.send_message(
-            message.chat.id,
-            text + "\n\n" + date
-        )
+        send_msg(chat_id, text + "\n\n" + date)
 
 
 def show_meta(message, username):
-    tele_bot.send_message(
-        message.chat.id,
-        "there is no user '{}'".format(username)
-    )
+    send_msg(message.chat.id,  "there is no user '{}'".format(username))
 
 
-def get_list_of_username_ids(message):
-    id_list = get_list_of_user_ids(message.chat.id)
-    if id_list == []:
-        tele_bot.send_message(
-            message.chat.id,
-            "you are not following anyone")
+def get_list_of_username_ids(chat_id):
+    id_list = get_list_of_user_ids(chat_id)
+    if not id_list:
+        send_msg(chat_id, "you are not following anyone")
+
     else:
         response = twitter_responses.response_users_by_id(id_list)
         followed_users = ""
@@ -66,49 +55,36 @@ def get_list_of_username_ids(message):
             followed_users = followed_users + \
                              "id:" + user_id + \
                              ", username: " + username + "\n\n"
-        tele_bot.send_message(
-            message.chat.id,
-            "you are following:\n\n" + followed_users)
+        send_msg(chat_id,  "you are following:\n\n" + followed_users)
 
 
-def subscribe_msg(response, message):
+def subscribe_msg(response, chat_id):
     msg_error = ""
     msg_ok = ""
     if 'data' in response:
-        msg_ok = subscribe_msg_if_no_errors(response["data"], message.chat.id)
+        msg_ok = subscribe_msg_if_no_errors(response["data"], chat_id)
     if 'errors' in response:
         msg_error = subscribe_msg_if_errors(response["errors"])
-    tele_bot.send_message(
-        message.chat.id,
-        msg_ok + msg_error
-    )
+    send_msg(chat_id,  msg_ok + msg_error)
 
 
-def subscribe_msg_if_no_users(message):
-    tele_bot.send_message(
-        message.chat.id,
-        "you didn't choose any user to subscribe"
-    )
+def subscribe_msg_if_no_users(chat_id):
+    send_msg(chat_id, "you didn't choose any user to subscribe")
 
 
-def unsubscribe_msg(response, message):
+def unsubscribe_msg(response, chat_id):
     msg_error = ""
     msg_ok = ""
     if 'data' in response:
-        msg_ok = unsubscribe_msg_if_no_errors(response["data"], message.chat.id)
+        msg_ok = unsubscribe_msg_if_no_errors(response["data"], chat_id)
     if 'errors' in response:
         msg_error = unsubscribe_msg_if_errors(response["errors"])
-    tele_bot.send_message(
-        message.chat.id,
-        msg_ok + msg_error
-    )
+    send_msg(chat_id, msg_ok + msg_error)
 
 
-def unsubscribe_msg_if_no_users(message):
-    tele_bot.send_message(
-        message.chat.id,
-        "you didn't choose any user to unsubscribe"
-    )
+
+def unsubscribe_msg_if_no_users(chat_id):
+    send_msg(chat_id, "you didn't choose any user to unsubscribe")
 
 
 def subscribe_msg_if_no_errors(resp_data, chat_id):
@@ -175,3 +151,7 @@ def add_user_to_storage_subscription(user_id, chat_id):
 
 def unsubscribe_user_from_storage_subscription(user_id, chat_id):
     return remove_twitter_user(user_id, chat_id)
+
+
+def send_msg(chat_id, msg):
+    tele_bot.send_message(chat_id, msg)

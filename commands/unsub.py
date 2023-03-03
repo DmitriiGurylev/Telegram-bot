@@ -7,9 +7,9 @@ def unsubscribe_by_id(message):
     user_ids_to_unsubscribe = message_text_array[1:]
 
     if user_ids_to_unsubscribe:
-        unsubscribe_users_by_id(user_ids_to_unsubscribe, message)
+        unsubscribe_users_by_id(user_ids_to_unsubscribe, message.chat.id)
     else:
-        unsubscribe_msg_if_no_users(message)
+        unsubscribe_msg_if_no_users(message.chat.id)
 
 
 def unsubscribe(message):
@@ -17,21 +17,21 @@ def unsubscribe(message):
     usernames_to_unsubscribe = message_text_array[1:]
 
     if usernames_to_unsubscribe:
-        unsubscribe_users_by_username(usernames_to_unsubscribe, message)
+        unsubscribe_users_by_username(usernames_to_unsubscribe, message.chat.id)
     else:
-        unsubscribe_msg_if_no_users(message)
+        unsubscribe_msg_if_no_users(message.chat.id)
 
 
-def unsubscribe_users_by_username(usernames_to_unsubscribe, message):
+def unsubscribe_users_by_username(usernames_to_unsubscribe, chat_id):
     response = twitter_responses.response_user_by_username(usernames_to_unsubscribe)
-    unsubscribe_msg(response, message)
+    unsubscribe_msg(response, chat_id)
 
 
-def unsubscribe_users_by_id(ids_to_unsubscribe, message):
+def unsubscribe_users_by_id(ids_to_unsubscribe, chat_id):
     response = twitter_responses.response_users_by_id(ids_to_unsubscribe)
-    unsubscribe_msg(response, message)
+    unsubscribe_msg(response, chat_id)
 
 
-def unsubscribe_from_all(message):
-    id_list = get_list_of_user_ids(message.chat.id)
-    unsubscribe_users_by_id(id_list, message)
+def unsubscribe_from_all(chat_id):
+    id_list = get_list_of_user_ids(chat_id)
+    unsubscribe_users_by_id(id_list, chat_id)

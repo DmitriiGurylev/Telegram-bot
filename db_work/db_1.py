@@ -1,8 +1,6 @@
 import redis
-
 from db_work import redis_connection
 
-# import redis_connection as r
 
 # DB for updating last tweets.
 db_number = 1
@@ -20,7 +18,7 @@ def get_list_of_user_ids(chat_id):  # get list of Twitter user ids
     return [i.decode("utf-8") for i in res]
 
 
-def get_list_of_newest_tweets(chat_id, user_id):
+def get_list_of_newest_tweets(chat_id, user_id):  # get newest_tweet_id of user
     res = redis.hget(chat_id, user_id)
     return res.decode("utf-8")
 
