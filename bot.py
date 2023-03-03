@@ -16,15 +16,12 @@ twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_c
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
 twitter_api = tweepy.API(twitter_auth, wait_on_rate_limit=True)
 
-dtformat = '%Y-%m-%dT%H:%M:%SZ'
-flag_for_zero = 0
-photo_number = 0
-is_bot_started = False
+polling_interval = 10
 
 
 def check_new_tweets_with_interval():
     while True:
-        time.sleep(5)
+        time.sleep(polling_interval)
 
         chat_ids = get_chat_ids()
         for chat_id in chat_ids:
@@ -36,8 +33,6 @@ def check_new_tweets_with_interval():
                     user_id,
                     since_id=newest_tweet_in_db
                 )
-                is_any_new_tweets = False
-
                 if response["meta"]["result_count"] == 0:
                     res1 = 0
                 else:
@@ -63,13 +58,13 @@ def get_messages_of_user(message):
     response = None
 
     if len(message_text_array) == 2:
-        username = message_text_array[1]
+        username = [message_text_array[1]]
         response = twitter_responses.response_user_by_username(username)
         user_id = response["data"][0]["id"]
         response = twitter_responses.response_twitter_last_tweets_of_the_user(user_id, 5)
     elif len(message_text_array) == 3:
         number_of_msg = message_text_array[1]
-        username = message_text_array[2]
+        username = [message_text_array[2]]
         response = twitter_responses.response_user_by_username(username)
         user_id = response["data"][0]["id"]
         response = twitter_responses.response_twitter_last_tweets_of_the_user(user_id, number_of_msg)

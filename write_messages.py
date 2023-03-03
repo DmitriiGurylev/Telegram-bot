@@ -42,7 +42,6 @@ def get_list_of_username_ids(chat_id):
     id_list = get_list_of_user_ids(chat_id)
     if not id_list:
         send_msg(chat_id, "you are not following anyone")
-
     else:
         response = twitter_responses.response_users_by_id(id_list)
         followed_users = ""

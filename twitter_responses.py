@@ -26,26 +26,14 @@ def response_users_by_id(user_ids):
     return json_response
 
 
-def response_user_by_id(user_id):
-    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
-    my_params = user_id
-    response = requests.get(
-        twitter_api.twitter_users_by_id_url + my_params,
-        headers=my_headers
-    )
-    json_response = response.json()
-    return json_response
-
-
 def response_twitter_last_tweets_of_the_user(user_id,
                                              number_of_msg):  # read data of tweet and deserialize them from API
     my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
-    my_params = twitter_api.twitter_users_tweets.copy()
+    my_params = dict()
 
     my_params['tweet.fields'] = "created_at"
     my_params['max_results'] = number_of_msg
-
     response = requests.get(
         twitter_api.twitter_users_tweets_url.replace(":id", user_id),
         params=my_params,
@@ -59,59 +47,11 @@ def response_twitter_last_tweets_of_the_user(user_id,
 def response_twitter_user_subscribe_tweets(user_id, since_id):
     my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
-    my_params = twitter_api.twitter_users_tweets.copy()
-    # my_params['tweet.fields'] = "attachments," \
-    #                             "created_at," \
-    #                             "author_id," \
-    #                             "context_annotations," \
-    #                             "conversation_id," \
-    #                             "entities," \
-    #                             "geo," \
-    #                             "id," \
-    #                             "in_reply_to_user_id," \
-    #                             "lang," \
-    #                             "public_metrics," \
-    #                             "possibly_sensitive," \
-    #                             "referenced_tweets," \
-    #                             "reply_settings," \
-    #                             "source," \
-    #                             "text," \
-    #                             "withheld"
-    # my_params['start_time'] = start_time
-    my_params['since_id'] = since_id
-
+    my_params = dict()
+    if since_id != '-1':
+        my_params['since_id'] = since_id
     response = requests.get(
         twitter_api.twitter_users_tweets_url.replace(":id", user_id),
-        params=my_params,
-        headers=my_headers
-    )
-    json_response = response.json()
-    return json_response
-
-
-def response_twitter_tweets(messages_id):  # read data of tweet and deserialize them from API
-    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
-
-    my_params = twitter_api.twitter_tweets.copy()
-    my_params['ids'] = messages_id
-
-    response = requests.get(
-        twitter_api.twitter_tweets_url,
-        params=my_params,
-        headers=my_headers
-    )
-    json_response = response.json()
-    return json_response
-
-
-def response_statuses_user_timeline(user_id):  # read data and deserialize them from API
-    my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
-
-    my_params = twitter_api.twitter_user_timeline.copy()
-    my_params['user_id'] = user_id
-
-    response = requests.get(
-        twitter_api.twitter_user_timeline_url.replace(":id", user_id),
         params=my_params,
         headers=my_headers
     )
@@ -122,10 +62,8 @@ def response_statuses_user_timeline(user_id):  # read data and deserialize them 
 def get_last_tweet_of_user(user_id):
     my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
-    my_params = twitter_api.twitter_user_timeline.copy()
-    # my_params['user_id'] = user_id
+    my_params = dict()
     my_params['max_results'] = 5
-
     response = requests.get(
         twitter_api.twitter_user_timeline_url.replace(":id", user_id),
         params=my_params,
