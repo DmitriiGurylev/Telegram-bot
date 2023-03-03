@@ -22,7 +22,7 @@ def get_list_of_user_ids(chat_id):  # get list of Twitter user ids
 
 def get_list_of_newest_tweets(chat_id, user_id):
     res = redis.hget(chat_id, user_id)
-    return [i.decode("utf-8") for i in res]
+    return res.decode("utf-8")
 
 
 def update_tweet_in_db(twitter_user_id, new_tweet_id, chat_id):

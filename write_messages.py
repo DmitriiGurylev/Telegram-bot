@@ -53,18 +53,22 @@ def show_meta(message, username):
 
 def get_list_of_username_ids(message):
     id_list = get_list_of_user_ids(message.chat.id)
-
-    response = twitter_responses.response_users_by_id(id_list)
-    followed_users = ""
-    for user in response["data"]:
-        user_id = user["id"]
-        username = user["username"]
-        followed_users = followed_users + \
-                         "id:" + user_id + \
-                         ", username: " + username + "\n\n"
-    tele_bot.send_message(
-        message.chat.id,
-        "you are following:\n\n" + followed_users)
+    if id_list == []:
+        tele_bot.send_message(
+            message.chat.id,
+            "you are not following anyone")
+    else:
+        response = twitter_responses.response_users_by_id(id_list)
+        followed_users = ""
+        for user in response["data"]:
+            user_id = user["id"]
+            username = user["username"]
+            followed_users = followed_users + \
+                             "id:" + user_id + \
+                             ", username: " + username + "\n\n"
+        tele_bot.send_message(
+            message.chat.id,
+            "you are following:\n\n" + followed_users)
 
 
 def subscribe_msg(response, message):

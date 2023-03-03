@@ -8,9 +8,9 @@ import twitter_responses
 from bot_init import tele_bot
 from commands.sub import subscribe, subscribe_by_id
 from commands.unsub import unsubscribe, unsubscribe_by_id, unsubscribe_from_all
-from db_work.db_1 import get_chat_ids, update_tweet_in_db
-from write_messages import send_start_message, send_about_message, show_messages, get_list_of_username_ids, show_meta, \
-    get_list_of_user_ids
+from db_work.db_1 import get_chat_ids, update_tweet_in_db, get_list_of_newest_tweets
+from write_messages import send_start_message, send_about_message, show_messages, get_list_of_username_ids, \
+    get_list_of_user_ids, show_meta
 
 twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_consumer_secret)
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
@@ -24,17 +24,17 @@ is_bot_started = False
 
 def check_new_tweets_with_interval():
     while True:
-        time.sleep(1)
+        time.sleep(5)
 
         chat_ids = get_chat_ids()
         for chat_id in chat_ids:
 
             user_ids = get_list_of_user_ids(chat_id)
             for user_id in user_ids:
-
+                newest_tweet_in_db = get_list_of_newest_tweets(chat_id, user_id)
                 response = twitter_responses.response_twitter_user_subscribe_tweets(
                     user_id,
-                    since_id=1
+                    since_id=newest_tweet_in_db
                 )
                 is_any_new_tweets = False
 
@@ -128,9 +128,9 @@ def handle():
 
 
 thread1 = Thread(target=handle)
-# thread2 = Thread(target=check_new_tweets_with_interval)
+thread2 = Thread(target=check_new_tweets_with_interval)
 
 thread1.start()
-# thread2.start()
+thread2.start()
 
 tele_bot.polling(non_stop=True)
