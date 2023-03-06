@@ -34,25 +34,29 @@ def check_new_tweets_with_interval():
 
         for user_id, chat_ids in map_of_user_id_and_chat_ids.items():
             newest_tweet_in_db = get_list_of_newest_tweets(chat_ids[0], user_id)
+            username = ''
             try:
-                response = twitter_responses.response_twitter_user_subscribe_tweets(
+                resp_tweet = twitter_responses.response_twitter_user_subscribe_tweets(
                     user_id,
                     since_id=newest_tweet_in_db
                 )
+                resp_user = twitter_responses.response_users_by_id([user_id])
+                username = resp_user["data"][0]["username"]
+
             except ConnectTimeout:
                 time.sleep(5)
                 return
             except ConnectionError:
                 time.sleep(5)
                 return
-            if response["meta"]["result_count"] > 0:
-                new_tweets = response["data"]
+            if resp_tweet["meta"]["result_count"] > 0:
+                new_tweets = resp_tweet["data"]
                 tweet_ids_list = [tweet["id"] for tweet in new_tweets]
                 newest_tweet_id = max(tweet_ids_list)
 
                 for chat_id in chat_ids:
                     res = update_tweet_in_db(user_id, newest_tweet_id, chat_id)
-                    show_messages(chat_id, new_tweets)
+                    show_messages(chat_id, new_tweets, username)
         time.sleep(5)
 
 

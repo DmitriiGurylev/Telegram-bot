@@ -28,12 +28,13 @@ def send_about_message(chat_id):
     send_msg(chat_id, msg)
 
 
-def show_messages(chat_id, tweets):
+def show_messages(chat_id, tweets, username):
     for tweet in tweets:
         text = tweet["text"]
         created_at = tweet["created_at"]
         date = iso8601.parse_date(created_at).strftime('%d-%m-%Y %H:%M:%S')
-        send_msg(chat_id, text + "\n\n" + date)
+        send_msg(chat_id, text + "\n\n" +
+                 username + "\n" + date)
 
 
 def show_meta(message, username):
