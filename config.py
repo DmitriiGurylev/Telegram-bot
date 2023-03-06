@@ -1,5 +1,6 @@
 #  There is bot token, Twotter keys
 #  здесь хранится токен бота, ключи Twitter
+import logging
 
 # Telegram-bot token
 telegram_bot_token = '1104755099:AAE85nbvyYOkKZIOJo30VvCM3ophDbSwALA'
@@ -13,3 +14,7 @@ twitter_bearer_token = 'AAAAAAAAAAAAAAAAAAAAAI%2F3WAEAAAAAf%2FKXeYv1gCmPxs09gYiM
 
 # chat id
 chat_id ='416544613'
+
+# logger config
+logger_level = logging.DEBUG
+logger_name = "bot"
