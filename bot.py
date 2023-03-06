@@ -63,8 +63,7 @@ def check_new_tweets_with_interval():
 def get_messages_of_user(message):
     message_text_array = message.text.split(' ')
     number_of_msg = None
-    username = ''
-
+    username = None
     if len(message_text_array) == 2:
         number_of_msg = 5
         username = [message_text_array[1]]
@@ -72,7 +71,7 @@ def get_messages_of_user(message):
         number_of_msg = message_text_array[1]
         username = [message_text_array[2]]
     else:
-        send_msg(message.chat.id, "you didn't choose Twitter user to get messages")
+        send_msg(message.chat.id, "You didn't choose Twitter user to get messages")
         return
 
     response = twitter_responses.response_user_by_username(username)
@@ -82,7 +81,7 @@ def get_messages_of_user(message):
         show_meta(message.chat.id, username)
     else:
         tweets = response["data"]
-        show_messages(message.chat.id, tweets)
+        show_messages(message.chat.id, tweets, username)
 
 
 def show_list(message):

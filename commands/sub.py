@@ -1,5 +1,5 @@
 import twitter_responses
-from write_messages import subscribe_msg_if_no_users, subscribe_msg
+from write_messages import subscribe_msg_if_no_users, sub_unsub_msg
 
 
 def subscribe_by_id(message):
@@ -24,9 +24,9 @@ def subscribe(message):
 
 def subscribe_users_by_username(usernames_to_subscribe, chat_id):
     response = twitter_responses.response_user_by_username(usernames_to_subscribe)
-    subscribe_msg(response, chat_id)
+    sub_unsub_msg(response, chat_id, True)
 
 
 def subscribe_users_by_id(ids_to_subscribe, chat_id):
     response = twitter_responses.response_users_by_id(ids_to_subscribe)
-    subscribe_msg(response, chat_id)
+    sub_unsub_msg(response, chat_id, True)

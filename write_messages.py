@@ -33,8 +33,7 @@ def show_messages(chat_id, tweets, username):
         text = tweet["text"]
         created_at = tweet["created_at"]
         date = iso8601.parse_date(created_at).strftime('%d-%m-%Y %H:%M:%S')
-        send_msg(chat_id, text + "\n\n" +
-                 username + "\n" + date)
+        send_msg(chat_id, text + "\n\n" + username + "\n" + date)
 
 
 def show_meta(message, username):
@@ -54,93 +53,78 @@ def get_list_of_username_ids(chat_id):
         send_msg(chat_id, "you are following:\n\n" + followed_users)
 
 
-def subscribe_msg(response, chat_id):
+def __subscribe_msg(response, chat_id):
     msg_error = ""
     msg_ok = ""
     if 'data' in response:
-        msg_ok = subscribe_msg_if_no_errors(response["data"], chat_id)
+        msg_ok = __sub_msg_if_no_errors(response["data"], chat_id)
     if 'errors' in response:
-        msg_error = subscribe_msg_if_errors(response["errors"])
-    send_msg(chat_id, msg_ok + msg_error)
+        msg_error = __sub_unsub_if_errors(response["errors"], True)
+    return msg_ok + msg_error
+
+
+def __unsubscribe_msg(response, chat_id):
+    msg_error = ""
+    msg_ok = ""
+    if 'data' in response:
+        msg_ok = __unsub_msg_if_no_errors(response["data"], chat_id)
+    if 'errors' in response:
+        msg_error = __sub_unsub_if_errors(response["errors"], False)
+    return msg_ok + msg_error
+
+
+def sub_unsub_msg(response, chat_id, is_sub):
+    msg = __subscribe_msg(response, chat_id) if is_sub else __unsubscribe_msg(response, chat_id)
+    send_msg(chat_id, msg)
 
 
 def subscribe_msg_if_no_users(chat_id):
     send_msg(chat_id, "you didn't choose any user to subscribe")
 
 
-def unsubscribe_msg(response, chat_id):
-    msg_error = ""
-    msg_ok = ""
-    if 'data' in response:
-        msg_ok = unsubscribe_msg_if_no_errors(response["data"], chat_id)
-    if 'errors' in response:
-        msg_error = unsubscribe_msg_if_errors(response["errors"])
-    send_msg(chat_id, msg_ok + msg_error)
-
-
 def unsubscribe_msg_if_no_users(chat_id):
     send_msg(chat_id, "you didn't choose any user to unsubscribe")
 
 
-def subscribe_msg_if_no_errors(resp_data, chat_id):
-    users_to_subscribe = ""
+def __sub_msg_if_no_errors(user_id, chat_id):
+    if add_user_to_storage(user_id, chat_id):
+        return "Successfully subscribed on user\n"
+    else:
+        return "Already subscribed on user\n"
+
+
+def __unsub_msg_if_no_errors(user_id, chat_id):
+    if remove_user_from_storage(user_id, chat_id):
+        return "Successfully unsubscribed on user\n"
+    else:
+        return "You are not subscribed on user\n"
+
+
+def sub_unsub_if_no_errors(resp_data, chat_id, is_sub):
     for user_ok in resp_data:
         user = twitter_user(user_ok["id"], user_ok["username"], user_ok["name"])
-        if add_user_to_storage_subscription(user_ok["id"], chat_id):
-            users_to_subscribe = users_to_subscribe + \
-                                 "Succesfully subscribed on user\n" + \
-                                 "id: " + user.id + ",\n" + \
-                                 "username: " + user.username + ",\n" + \
-                                 "name: " + user.name + "\n\n"
+        users_to_sub_unsub = ""
+        if is_sub:
+            users_to_sub_unsub = __sub_msg_if_no_errors(user.id, chat_id)
         else:
-            users_to_subscribe = users_to_subscribe + \
-                                 "Already subscribed on user\n" + \
-                                 "id: " + user.id + ",\n" + \
-                                 "username: " + user.username + ",\n" + \
-                                 "name: " + user.name + "\n\n"
-    return users_to_subscribe
+            users_to_sub_unsub = __unsub_msg_if_no_errors(user.id, chat_id)
+        return users_to_sub_unsub + \
+            "id: " + user.id + ",\n" + \
+            "username: " + user.username + ",\n" + \
+            "name: " + user.name + "\n\n"
 
 
-def unsubscribe_msg_if_no_errors(resp_data, chat_id):
-    users_to_unsubscribe = ""
-    for user_ok in resp_data:
-        user = twitter_user(user_ok["id"], user_ok["username"], user_ok["name"])
-        if unsubscribe_user_from_storage_subscription(user_ok["id"], chat_id):
-            users_to_unsubscribe = users_to_unsubscribe + \
-                                   "Succesfully unsubscribed on user\n" + \
-                                   "id: " + user.id + ",\n" + \
-                                   "username: " + user.username + ",\n" + \
-                                   "name: " + user.name + "\n\n"
-        else:
-            users_to_unsubscribe = users_to_unsubscribe + \
-                                   "You are not subscribed on user\n" + \
-                                   "id: " + user.id + ",\n" + \
-                                   "username: " + user.username + ",\n" + \
-                                   "name: " + user.name + "\n\n"
-    return users_to_unsubscribe
-
-
-def subscribe_msg_if_errors(rest_error):
+def __sub_unsub_if_errors(rest_error, is_sub):
+    sub_unsub_text = "subscribe" if is_sub else "unsubscribe"
     errors = ""
     for user_error in rest_error:
-        errors = errors + \
-                 "Can't subscribe on user\n" + \
-                 "name: " + user_error["value"] + "\n" \
-                                                  "reason: " + user_error["detail"] + "\n\n"
+        errors = errors + "Can't " + sub_unsub_text + \
+                 " on user\nname: " + user_error["value"] + \
+                 "\nreason: " + user_error["detail"] + "\n\n"
     return errors
 
 
-def unsubscribe_msg_if_errors(rest_error):
-    errors = ""
-    for user_error in rest_error:
-        errors = errors + \
-                 "Can't unsubscribe on user\n" + \
-                 "name: " + user_error["value"] + "\n" \
-                                                  "reason: " + user_error["detail"] + "\n\n"
-    return errors
-
-
-def add_user_to_storage_subscription(user_id, chat_id):
+def add_user_to_storage(user_id, chat_id):
     response = twitter_responses.get_last_tweet_of_user(user_id)
     latest_tweet_id = -1 \
         if response["meta"]["result_count"] == 0 \
@@ -148,7 +132,7 @@ def add_user_to_storage_subscription(user_id, chat_id):
     return update_tweet_in_db(user_id, latest_tweet_id, chat_id)
 
 
-def unsubscribe_user_from_storage_subscription(user_id, chat_id):
+def remove_user_from_storage(user_id, chat_id):
     return remove_twitter_user(user_id, chat_id)
 
 
