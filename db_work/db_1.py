@@ -13,8 +13,8 @@ def get_chat_ids():  # get list of chat ids
     return [i.decode("utf-8") for i in res]
 
 
-def get_list_of_user_ids(chat_id):
-    chat_id_str = str(chat_id  )# get list of Twitter user ids
+def get_list_of_user_ids(chat_id):  # get list of Twitter user ids for chat id
+    chat_id_str = str(chat_id)
     chat_ids_set = set()
     chat_ids_set.update(get_chat_ids())
     if chat_id_str not in chat_ids_set:

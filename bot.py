@@ -2,6 +2,7 @@ import time
 from threading import Thread
 
 import tweepy
+from requests import ConnectTimeout
 
 import config
 import twitter_responses
@@ -21,57 +22,58 @@ polling_interval = 10
 
 def check_new_tweets_with_interval():
     while True:
-        time.sleep(polling_interval)
+        # time.sleep(polling_interval)
 
         chat_ids = get_chat_ids()
+        map_of_user_id_and_chat_ids = dict()
         for chat_id in chat_ids:
+            for user_id in get_list_of_user_ids(chat_id):
+                map_of_user_id_and_chat_ids[user_id] = map_of_user_id_and_chat_ids[user_id] + chat_id \
+                    if user_id in map_of_user_id_and_chat_ids.keys() \
+                    else [chat_id]
 
-            user_ids = get_list_of_user_ids(chat_id)
-            for user_id in user_ids:
-                newest_tweet_in_db = get_list_of_newest_tweets(chat_id, user_id)
+        for user_id, chat_ids in map_of_user_id_and_chat_ids.items():
+            newest_tweet_in_db = get_list_of_newest_tweets(chat_ids[0], user_id)
+            try:
                 response = twitter_responses.response_twitter_user_subscribe_tweets(
                     user_id,
                     since_id=newest_tweet_in_db
                 )
-                if response["meta"]["result_count"] == 0:
-                    res1 = 0
-                else:
-                    new_tweets = response["data"]
-                    is_any_new_tweets = True
-                    # TODO добавить последний твит в БД
-                    # TODO отправить новые твиты в телеграм
-                    tweet_ids_list = [tweet["id"] for tweet in new_tweets]
-                    newest_tweet_id = max(tweet_ids_list)
+            except ConnectTimeout:
+                time.sleep(5)
+                return
+            except ConnectionError:
+                time.sleep(5)
+                return
+            if response["meta"]["result_count"] > 0:
+                new_tweets = response["data"]
+                tweet_ids_list = [tweet["id"] for tweet in new_tweets]
+                newest_tweet_id = max(tweet_ids_list)
 
+                for chat_id in chat_ids:
                     res = update_tweet_in_db(user_id, newest_tweet_id, chat_id)
-
-                    for tweet in new_tweets:
-                        tele_bot.send_message(
-                            chat_id,
-                            tweet["text"]
-                        )
+                    show_messages(chat_id, new_tweets)
+        time.sleep(5)
 
 
 def get_messages_of_user(message):
     message_text_array = message.text.split(' ')
-    username = None
-    response = None
+    number_of_msg = None
+    username = ''
 
     if len(message_text_array) == 2:
+        number_of_msg = 5
         username = [message_text_array[1]]
-        response = twitter_responses.response_user_by_username(username)
-        user_id = response["data"][0]["id"]
-        response = twitter_responses.response_twitter_last_tweets_of_the_user(user_id, 5)
     elif len(message_text_array) == 3:
         number_of_msg = message_text_array[1]
         username = [message_text_array[2]]
-        response = twitter_responses.response_user_by_username(username)
-        user_id = response["data"][0]["id"]
-        response = twitter_responses.response_twitter_last_tweets_of_the_user(user_id, number_of_msg)
     else:
         send_msg(message.chat.id, "you didn't choose Twitter user to get messages")
         return
 
+    response = twitter_responses.response_user_by_username(username)
+    user_id = response["data"][0]["id"]
+    response = twitter_responses.response_twitter_last_tweets_of_the_user(user_id, number_of_msg)
     if "data" not in response:
         show_meta(message.chat.id, username)
     else:

@@ -48,6 +48,7 @@ def response_twitter_user_subscribe_tweets(user_id, since_id):
     my_headers = {'Authorization': 'Bearer ' + config.twitter_bearer_token}
 
     my_params = dict()
+    my_params['tweet.fields'] = "created_at"
     if since_id != '-1':
         my_params['since_id'] = since_id
     response = requests.get(

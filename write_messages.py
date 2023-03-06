@@ -2,7 +2,8 @@ import iso8601
 
 import twitter_responses
 from bot_init import tele_bot
-from db_work.db_1 import update_tweet_in_db, remove_twitter_user, get_list_of_user_ids
+from db_work.db_1 import update_tweet_in_db, remove_twitter_user, \
+    get_list_of_user_ids
 
 
 def send_start_message(message):
@@ -35,7 +36,7 @@ def show_messages(chat_id, tweets):
 
 
 def show_meta(message, username):
-    send_msg(message.chat.id, "there is no user '"+username+"'")
+    send_msg(message.chat.id, "there is no user '" + username + "'")
 
 
 def get_list_of_username_ids(chat_id):
@@ -48,9 +49,7 @@ def get_list_of_username_ids(chat_id):
         for user in response["data"]:
             user_id = user["id"]
             username = user["username"]
-            followed_users = followed_users + \
-                             "id:" + user_id + \
-                             ", username: " + username + "\n\n"
+            followed_users = followed_users + "id:" + user_id + ", username: " + username + "\n\n"
         send_msg(chat_id, "you are following:\n\n" + followed_users)
 
 
@@ -140,7 +139,9 @@ def unsubscribe_msg_if_errors(rest_error):
 
 def add_user_to_storage_subscription(user_id, chat_id):
     response = twitter_responses.get_last_tweet_of_user(user_id)
-    latest_tweet_id = -1 if response["meta"]["result_count"] == 0 else response["meta"]["newest_id"]
+    latest_tweet_id = -1 \
+        if response["meta"]["result_count"] == 0 \
+        else response["meta"]["newest_id"]
     return update_tweet_in_db(user_id, latest_tweet_id, chat_id)
 
 
