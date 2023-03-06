@@ -4,6 +4,7 @@ import twitter_responses
 from bot_init import tele_bot
 from db_work.db_1 import update_tweet_in_db, remove_twitter_user, \
     get_list_of_user_ids
+from twitter_user import twitter_user
 
 
 def send_start_message(message):
@@ -47,9 +48,8 @@ def get_list_of_username_ids(chat_id):
         response = twitter_responses.response_users_by_id(id_list)
         followed_users = ""
         for user in response["data"]:
-            user_id = user["id"]
-            username = user["username"]
-            followed_users = followed_users + "id:" + user_id + ", username: " + username + "\n\n"
+            user = twitter_user(user["id"], user["username"], None)
+            followed_users = followed_users + "id:" + user.id + ", username: " + user.username + "\n\n"
         send_msg(chat_id, "you are following:\n\n" + followed_users)
 
 
@@ -84,36 +84,38 @@ def unsubscribe_msg_if_no_users(chat_id):
 def subscribe_msg_if_no_errors(resp_data, chat_id):
     users_to_subscribe = ""
     for user_ok in resp_data:
+        user = twitter_user(user_ok["id"], user_ok["username"], user_ok["name"])
         if add_user_to_storage_subscription(user_ok["id"], chat_id):
             users_to_subscribe = users_to_subscribe + \
                                  "Succesfully subscribed on user\n" + \
-                                 "id: " + user_ok["id"] + ",\n" + \
-                                 "username: " + user_ok["username"] + ",\n" + \
-                                 "name: " + user_ok["name"] + "\n\n"
+                                 "id: " + user.id + ",\n" + \
+                                 "username: " + user.username + ",\n" + \
+                                 "name: " + user.name + "\n\n"
         else:
             users_to_subscribe = users_to_subscribe + \
                                  "Already subscribed on user\n" + \
-                                 "id: " + user_ok["id"] + ",\n" + \
-                                 "username: " + user_ok["username"] + ",\n" + \
-                                 "name: " + user_ok["name"] + "\n\n"
+                                 "id: " + user.id + ",\n" + \
+                                 "username: " + user.username + ",\n" + \
+                                 "name: " + user.name + "\n\n"
     return users_to_subscribe
 
 
 def unsubscribe_msg_if_no_errors(resp_data, chat_id):
     users_to_unsubscribe = ""
     for user_ok in resp_data:
+        user = twitter_user(user_ok["id"], user_ok["username"], user_ok["name"])
         if unsubscribe_user_from_storage_subscription(user_ok["id"], chat_id):
             users_to_unsubscribe = users_to_unsubscribe + \
                                    "Succesfully unsubscribed on user\n" + \
-                                   "id: " + user_ok["id"] + ",\n" + \
-                                   "username: " + user_ok["username"] + ",\n" + \
-                                   "name: " + user_ok["name"] + "\n\n"
+                                   "id: " + user.id + ",\n" + \
+                                   "username: " + user.username + ",\n" + \
+                                   "name: " + user.name + "\n\n"
         else:
             users_to_unsubscribe = users_to_unsubscribe + \
                                    "You are not subscribed on user\n" + \
-                                   "id: " + user_ok["id"] + ",\n" + \
-                                   "username: " + user_ok["username"] + ",\n" + \
-                                   "name: " + user_ok["name"] + "\n\n"
+                                   "id: " + user.id + ",\n" + \
+                                   "username: " + user.username + ",\n" + \
+                                   "name: " + user.name + "\n\n"
     return users_to_unsubscribe
 
 
