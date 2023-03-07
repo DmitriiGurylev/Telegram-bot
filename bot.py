@@ -4,6 +4,7 @@ from threading import Thread
 import tweepy
 from requests import ConnectTimeout
 
+import logging
 import config
 import twitter_responses
 from bot_init import tele_bot
@@ -17,12 +18,14 @@ twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_c
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
 twitter_api = tweepy.API(twitter_auth, wait_on_rate_limit=True)
 
-polling_interval = 10
+polling_interval = 5
+logger = logging.getLogger(config.logger_name)
+logger.setLevel(config.logger_level)
 
 
 def check_new_tweets_with_interval():
     while True:
-        # time.sleep(polling_interval)
+        logger.info('START OF POLLING')
 
         chat_ids = get_chat_ids()
         map_of_user_id_and_chat_ids = dict()
@@ -57,7 +60,8 @@ def check_new_tweets_with_interval():
                 for chat_id in chat_ids:
                     res = update_tweet_in_db(user_id, newest_tweet_id, chat_id)
                     show_messages(chat_id, new_tweets, username)
-        time.sleep(5)
+        logger.info('END OF POLLING')
+        time.sleep(polling_interval)
 
 
 def get_messages_of_user(message):
