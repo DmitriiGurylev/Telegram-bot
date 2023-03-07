@@ -28,7 +28,7 @@ def check_new_tweets_with_interval():
         logger.info('START OF POLLING')
 
         chat_ids = get_chat_ids()
-        map_of_user_id_and_chat_ids = dict()
+        map_of_user_id_and_chat_ids = {}
         for chat_id in chat_ids:
             for user_id in get_list_of_user_ids(chat_id):
                 map_of_user_id_and_chat_ids[user_id] = map_of_user_id_and_chat_ids[user_id] + chat_id \
