@@ -18,7 +18,7 @@ twitter_auth = tweepy.OAuthHandler(config.twitter_consumer_key, config.twitter_c
 twitter_auth.set_access_token(config.twitter_access_key, config.twitter_access_secret)
 twitter_api = tweepy.API(twitter_auth, wait_on_rate_limit=True)
 
-polling_interval = 5
+polling_interval = 20
 logger = logging.getLogger(config.logger_name)
 logger.setLevel(config.logger_level)
 
@@ -42,7 +42,7 @@ def check_new_tweets_with_interval():
                 since_id=newest_tweet_in_db
             )
             resp_user = twitter_responses.response_users_by_id([user_id])
-            if resp_user['status'] == 429:
+            if 'status' in resp_user and resp_user['status'] == 429:
                 return
             username = resp_user["data"][0]["username"]
 

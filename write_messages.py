@@ -100,18 +100,20 @@ def __unsub_msg_if_no_errors(user_id, chat_id):
         return "You are not subscribed on user\n"
 
 
-def sub_unsub_if_no_errors(resp_data, chat_id, is_sub):
-    for user_ok in resp_data:
+def sub_unsub_if_no_errors(resp, chat_id, is_sub):
+    msg = ''
+    for user_ok in resp["data"]:
         user = twitter_user(user_ok["id"], user_ok["username"], user_ok["name"])
-        users_to_sub_unsub = ""
+        users_to_sub_unsub = ''
         if is_sub:
             users_to_sub_unsub = __sub_msg_if_no_errors(user.id, chat_id)
         else:
             users_to_sub_unsub = __unsub_msg_if_no_errors(user.id, chat_id)
-        return users_to_sub_unsub + \
+        msg += users_to_sub_unsub + \
             "id: " + user.id + ",\n" + \
             "username: " + user.username + ",\n" + \
             "name: " + user.name + "\n\n"
+    send_msg(chat_id, msg)
 
 
 def __sub_unsub_if_errors(rest_error, is_sub):

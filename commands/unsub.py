@@ -1,5 +1,5 @@
 import twitter_responses
-from write_messages import unsubscribe_msg_if_no_users, get_list_of_user_ids, sub_unsub_msg
+from write_messages import unsubscribe_msg_if_no_users, get_list_of_user_ids, sub_unsub_if_no_errors
 
 
 def unsubscribe_by_id(message):
@@ -24,12 +24,12 @@ def unsubscribe(message):
 
 def unsubscribe_users_by_username(usernames_to_unsubscribe, chat_id):
     response = twitter_responses.response_user_by_username(usernames_to_unsubscribe)
-    sub_unsub_msg(response, chat_id, False)
+    sub_unsub_if_no_errors(response, chat_id, False)
 
 
 def unsubscribe_users_by_id(ids_to_unsubscribe, chat_id):
     response = twitter_responses.response_users_by_id(ids_to_unsubscribe)
-    sub_unsub_msg(response, chat_id, False)
+    sub_unsub_if_no_errors(response, chat_id, False)
 
 
 def unsubscribe_from_all(chat_id):
