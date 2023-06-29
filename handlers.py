@@ -7,7 +7,7 @@ from write_messages import send_start_message, send_about_message, show_messages
     get_list_of_user_ids, show_meta, send_msg
 
 
-def check_new_tweets_with_interval():
+async def check_new_tweets_with_interval():
     while True:
         chat_ids = get_chat_ids()
         map_of_user_id_and_chat_ids = {}
@@ -38,7 +38,7 @@ def check_new_tweets_with_interval():
                     show_messages(chat_id, new_tweets, username)
 
 
-def get_messages_of_user(message):
+async def get_messages_of_user(message):
     message_text_array = message.text.split(' ')
     if len(message_text_array) == 2:
         number_of_msg = 5
@@ -60,46 +60,46 @@ def get_messages_of_user(message):
         show_messages(message.chat.id, tweets, username)
 
 
-def show_list(message):
-    get_list_of_username_ids(message.chat.id)
+async def show_list(message):
+    await get_list_of_username_ids(message.chat.id)
 
 
-def start_welcome(message):
-    send_start_message(message)
+async def start_welcome(message):
+    await send_start_message(message)
 
 
-def about_reply(message):
-    send_about_message(message.chat.id)
+async def about_reply(message):
+    await send_about_message(message.chat.id)
 
 
-def get_reply(message):
-    get_messages_of_user(message)
+async def get_reply(message):
+    await get_messages_of_user(message)
 
 
-def list_reply(message):
-    show_list(message)
+async def list_reply(message):
+    await show_list(message)
 
 
-def handle_text(message):
+async def handle_text(message):
     message_text_array = message.text.split(' ')
 
     match message_text_array[0]:
         case "sub":
-            subscribe(message)
+            await subscribe(message)
         case "sub_id":
-            subscribe_by_id(message)
+            await subscribe_by_id(message)
         case "list":
-            show_list(message)
+            await show_list(message)
         case "about":
-            send_about_message(message)
+            await send_about_message(message)
         case "get":
-            get_messages_of_user(message)
+            await get_messages_of_user(message)
         case "unsub":
-            unsubscribe(message)
+            await unsubscribe(message)
         case "unsub_id":
-            unsubscribe_by_id(message)
+            await unsubscribe_by_id(message)
         case "wipe":
-            unsubscribe_from_all(message.chat.id)
+            await unsubscribe_from_all(message.chat.id)
         case _:
             "ЗАГЛУШКА"
 
