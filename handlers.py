@@ -1,12 +1,5 @@
-import logging
-import time
-
-import tweepy
 from aiogram import Dispatcher
-
-import config
 import twitter_responses
-from bot_init import bot
 from commands.sub import subscribe, subscribe_by_id
 from commands.unsub import unsubscribe, unsubscribe_by_id, unsubscribe_from_all
 from db_work.db_1 import get_chat_ids, update_tweet_in_db, get_list_of_newest_tweets
@@ -112,8 +105,8 @@ def handle_text(message):
 
 
 def register_handlers(dp: Dispatcher):
-    dp.register_callback_query_handler(start_welcome, commands=['start'])
-    dp.register_callback_query_handler(about_reply, commands=['about'])
+    dp.register_message_handler(start_welcome, commands=['start'])
+    dp.register_message_handler(about_reply, commands=['about'])
     dp.register_message_handler(get_reply, commands=['get'])
     dp.register_message_handler(list_reply, commands=['list'])
     dp.register_message_handler(handle_text, content_types=['text'])
