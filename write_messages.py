@@ -1,7 +1,7 @@
 import iso8601
 
 import twitter_responses
-from bot_init import tele_bot
+from bot_init import bot
 from db_work.db_1 import update_tweet_in_db, remove_twitter_user, \
     get_list_of_user_ids
 from twitter_user import twitter_user
@@ -9,7 +9,7 @@ from twitter_user import twitter_user
 
 def send_start_message(message):
     msg = "Hi, " + message.from_user.first_name + "!\n" + \
-          "I'm a bot named " + tele_bot.get_me().first_name + ".\n" + \
+          "I'm a bot named " + bot.get_me().first_name + ".\n" + \
           "U can send me next commands\n" + \
           "1) /about, to know some information\n" + \
           "2) sub, to subscribe Twitter user by username\n" + \
@@ -139,4 +139,4 @@ def remove_user_from_storage(user_id, chat_id):
 
 
 def send_msg(chat_id, msg):
-    tele_bot.send_message(chat_id, msg)
+    bot.send_message(chat_id, msg)
