@@ -10,7 +10,11 @@ services:
       - 8000:8000
     depends_on:
       - redis
-  redis:
-    image: redis:alpine
-    command: [ "redis-server", "--bind", "redis", "--port", "6379" ]
+  pg:
+    image: postgres
+    ports:
+      - "5432:5432"
+#    environment:
+#      -
+
 # docker-compose -f ./docker-compose.yml up -d --build

@@ -1,4 +1,4 @@
-class twitter_user:
+class TwitterUser:
     def __init__(self, user_id, username, name):
         self.id = user_id
         self.username = username

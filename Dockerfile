@@ -1,7 +1,14 @@
 FROM python:3.11-alpine
 
 WORKDIR /app
+
+COPY Pipfile Pipfile
 COPY Pipfile.lock Pipfile.lock
-RUN pip install --upgrade pipenv && pipenv install
-COPY . .
-CMD [ "python3" , "bot.py"]
+
+RUN python3.11 -m venv venv && \
+    chmod +x ./venv/bin/activate && \
+    ./venv/bin/activate && \
+    ./venv/bin/python3 -m pip install pipenv && \
+    ./venv/bin/pipenv install
+#COPY . .
+#CMD [ "python3" , "bot.py"]

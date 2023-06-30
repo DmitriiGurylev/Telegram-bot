@@ -1,14 +1,4 @@
-import redis
-from db_work import redis_connection
-
-
-# DB for updating last tweets.
-db_number = 1
-pool = redis.ConnectionPool(host=redis_connection.host, port=redis_connection.port, db=db_number)
-redis = redis.Redis(connection_pool=pool)
-
-
-def get_chat_ids():  # get list of chat ids
+def get_chat_ids():  # get list of chat ids using the bot
     res = redis.keys()
     return [i.decode("utf-8") for i in res]
 

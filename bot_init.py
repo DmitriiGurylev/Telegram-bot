@@ -1,7 +1,6 @@
 import logging
 from aiogram import Bot, Dispatcher
 import config
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import tweepy
 
 
@@ -15,5 +14,4 @@ twitter_api = tweepy.API(twitter_auth, wait_on_rate_limit=True)
 
 # Initialize bot and dispatcher
 bot = Bot(token=config.API_TOKEN)
-storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(bot)

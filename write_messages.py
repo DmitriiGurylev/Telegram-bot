@@ -1,15 +1,16 @@
 import iso8601
+from psycopg2 import DatabaseError
 
 import twitter_responses
 from bot_init import bot
-from db_work.db_1 import update_tweet_in_db, remove_twitter_user, \
-    get_list_of_user_ids
-from twitter_user import twitter_user
+
+from db_work import pg_connection
+from db_work.db import get_list_of_user_ids, remove_twitter_user
+from twitteruser import TwitterUser
 
 
 async def send_start_message(message):
-    msg = "Hi, " + message.from_user.first_name + "!\n" + \
-          "I'm a bot named " + bot.get_me().first_name + ".\n" + \
+    msg = "Hi!\n" + \
           "U can send me next commands\n" + \
           "1) /about, to know some information\n" + \
           "2) sub, to subscribe Twitter user by username\n" + \
@@ -48,7 +49,7 @@ async def get_list_of_username_ids(chat_id):
         response = twitter_responses.response_users_by_id(id_list)
         followed_users = ""
         for user in response["data"]:
-            user = twitter_user(user["id"], user["username"], None)
+            user = TwitterUser(user["id"], user["username"], None)
             followed_users = followed_users + "id:" + user.id + ", username: " + user.username + "\n\n"
         await send_msg(chat_id, "you are following:\n\n" + followed_users)
 
@@ -78,16 +79,12 @@ async def sub_unsub_msg(response, chat_id, is_sub):
     await send_msg(chat_id, msg)
 
 
-async def subscribe_msg_if_no_users(chat_id):
-    await send_msg(chat_id, "you didn't choose any user to subscribe")
-
-
 async def unsubscribe_msg_if_no_users(chat_id):
     await send_msg(chat_id, "you didn't choose any user to unsubscribe")
 
 
 def __sub_msg_if_no_errors(user_id, chat_id):
-    if add_user_to_storage(user_id, chat_id):
+    if add_user_to_db(user_id, chat_id):
         return "Successfully subscribed on user\n"
     else:
         return "Already subscribed on user\n"
@@ -100,20 +97,16 @@ def __unsub_msg_if_no_errors(user_id, chat_id):
         return "You are not subscribed on user\n"
 
 
-async def sub_unsub_if_no_errors(resp, chat_id, is_sub):
+async def sub_if_no_errors(resp, chat_id):
     msg = ''
     for user_ok in resp["data"]:
-        user = twitter_user(user_ok["id"], user_ok["username"], user_ok["name"])
-        users_to_sub_unsub = ''
-        if is_sub:
-            users_to_sub_unsub = __sub_msg_if_no_errors(user.id, chat_id)
-        else:
-            users_to_sub_unsub = __unsub_msg_if_no_errors(user.id, chat_id)
-        msg += users_to_sub_unsub + \
-            "id: " + user.id + ",\n" + \
-            "username: " + user.username + ",\n" + \
-            "name: " + user.name + "\n\n"
-    await send_msg(chat_id, msg)
+        user = TwitterUser(user_ok["id"], user_ok["username"], user_ok["name"])
+        users_to_sub = __sub_msg_if_no_errors(user.id, chat_id)
+        msg += users_to_sub + \
+               "id: " + user.id + ",\n" + \
+               "username: " + user.username + ",\n" + \
+               "name: " + user.name + "\n\n"
+    return msg
 
 
 def __sub_unsub_if_errors(rest_error, is_sub):
@@ -123,15 +116,35 @@ def __sub_unsub_if_errors(rest_error, is_sub):
         errors = errors + "Can't " + sub_unsub_text + \
                  " on user\nname: " + user_error["value"] + \
                  "\nreason: " + user_error["detail"] + "\n\n"
-    return await errors
+    return errors
 
 
-async def add_user_to_storage(user_id, chat_id):
+def add_user_to_db(user_id, chat_id):
     response = twitter_responses.get_last_tweet_of_user(user_id)
     latest_tweet_id = -1 \
         if response["meta"]["result_count"] == 0 \
         else response["meta"]["newest_id"]
-    return await update_tweet_in_db(user_id, latest_tweet_id, chat_id)
+    try:
+        with pg_connection.conn as conn:
+            with conn.cursor() as cursor:
+                commands = (
+                    f"""
+                    INSERT INTO twitter_users(twitter_user_id)
+                    VALUES ({user_id})
+                    """,
+                    f"""
+                    INSERT INTO service_users_following(tld_id, twitter_user_id)
+                    VALUES ({chat_id}, {user_id})
+                    """,
+                    f"""
+                    INSERT INTO twitter_user_last_msgs(twitter_user_id, msg_id)
+                    VALUES ({user_id}, {latest_tweet_id})
+                    """
+                )
+                for c in commands:
+                    cursor.execute(c)
+    except (Exception, DatabaseError) as error:
+        print(error)
 
 
 async def remove_user_from_storage(user_id, chat_id):
