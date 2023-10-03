@@ -8,7 +8,7 @@ redis==4.5.4
 requests==2.31.0
 requests-oauthlib==1.3.1
 tweepy==4.12.1
-urllib3==1.26.15
+urllib3==1.26.17
 flake8==6.0.0
 pip==23.1
 # awsebcli==3.20.5
