@@ -1,5 +1,5 @@
 charset-normalizer==3.1.0
-idna==3.4
+idna==3.7
 iso8601==1.1.0
 mock==5.0.2
 oauthlib==3.2.2
